@@ -28,8 +28,8 @@ export async function generateQuestionEmbedding(sourceText, options = {}) {
 
   try {
     const response = await ai.models.embedContent({
-      model: "gemini-embedding-2",
-      contents: "What is the meaning of life?",
+      model: GEMINI_API_MODEL,
+      contents: sourceText,
       config: {
         taskType: taskType,
         outputDimensionality: 768,

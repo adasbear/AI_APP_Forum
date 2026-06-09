@@ -46,8 +46,7 @@ export const createQuestionWithVectorService = async (payload) => {
 
   //generate vector embedding for the question
   try {
-    const embeddingResult = await generateQuestionEmbedding({
-      sourceText,
+    const embeddingResult = await generateQuestionEmbedding(sourceText, {
       questionId: creationResult.id,
     });
 
@@ -58,20 +57,19 @@ export const createQuestionWithVectorService = async (payload) => {
       status: "ready",
     });
   } catch (error) {
-    //log detailed error information for debugging
     console.error("===FAILED TO STORE VECTOR FOR QUESTION===");
     console.error("Question ID:", creationResult.id);
     console.error("Operation: question creation");
     console.error("Error:", error);
     console.error("==========================================");
-  }
 
-  await storeQuestionVector({
-    questionId: creationResult.id,
-    sourceText,
-    embedding: [],
-    status: "failed",
-  }).catch((e) => console.error("failed to save failed status:", e));
+    await storeQuestionVector({
+      questionId: creationResult.id,
+      sourceText,
+      embedding: [],
+      status: "failed",
+    }).catch((e) => console.error("failed to save failed status:", e));
+  }
 
   return {
     question: creationResult,
