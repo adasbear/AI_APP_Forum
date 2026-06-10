@@ -8,6 +8,7 @@ export const db = mysql.createPool({
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASS || '',
   database: process.env.DB_NAME || 'evangadi_forum',
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
 });
 
 const ensureParams = params => {
