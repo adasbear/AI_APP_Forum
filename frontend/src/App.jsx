@@ -10,6 +10,7 @@ import Layout from './components/Layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import Auth from './pages/Auth/Auth';
 import Dashboard from './pages/Dashboard/Dashboard';
+import QuestionDetail from './pages/QuestionDetail/QuestionDetail';
 import Landing from './pages/Landing/Landing';
 
 function App() {
@@ -51,7 +52,7 @@ function App() {
               path='/questions/:questionHash'
               element={
                 <ProtectedRoute>
-                  <h1>Question Detail Page</h1>
+                  <QuestionDetail />
                 </ProtectedRoute>
               }
             />

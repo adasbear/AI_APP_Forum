@@ -52,7 +52,29 @@ function handleQuestionError(error) {
   return new Error(backendMessage || 'An unexpected error occurred.');
 }
 
+async function getSingleQuestion(questionHash) {
+  try {
+    const response = await apiClient.get(`/api/questions/${questionHash}`);
+    return response.data;
+  } catch (error) {
+    throw handleQuestionError(error);
+  }
+}
+
+async function getSimilarQuestions(questionHash) {
+  try {
+    const response = await apiClient.get(
+      `/api/questions/${questionHash}/similar`,
+    );
+    return response.data;
+  } catch (error) {
+    throw handleQuestionError(error);
+  }
+}
+
 export const questionService = {
   getQuestions,
   searchQuestionsSemantic,
+  getSingleQuestion,
+  getSimilarQuestions,
 };
