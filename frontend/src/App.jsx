@@ -1,63 +1,83 @@
 /**
- * Route map: public pages live outside `Layout`; forum tools use `Layout` + `ProtectedRoute`.
- * Add new `<Route>` entries here, then wire navigation in `Sidebar.jsx` and
- * `Layout.jsx` (`getTitle` / `getSubtitle`) so the shell stays in sync.
+ * Route map: public pages live outside `Layout`; forum tools use
+ * `Layout` + `ProtectedRoute`.
+ *
+ * Add new <Route> entries here, then wire navigation in:
+ * - Sidebar.jsx
+ * - Layout.jsx (getTitle / getSubtitle)
+ *
+ * so the shell stays in sync.
  */
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import Layout from './components/Layout/Layout';
-import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
-import Auth from './pages/Auth/Auth';
-import Dashboard from './pages/Dashboard/Dashboard';
-import Landing from './pages/Landing/Landing';
-import PostQuestion from './pages/PostQuestion/PostQuestion';
+
+import React from "react";
+import {
+  BrowserRouter,
+  Routes,
+ Route,
+  Navigate,
+} from "react-router-dom";
+
+import { AuthProvider } from "./contexts/AuthContext";
+
+import Layout from "./components/Layout/Layout";
+import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
+
+import Auth from "./pages/Auth/Auth";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import QuestionDetail from "./pages/QuestionDetail/QuestionDetail";
+import Landing from "./pages/Landing/Landing";
+import PostQuestion from "./pages/PostQuestion/PostQuestion";
+import MyQuestions from "./pages/MyQuestions/MyQuestions";
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Public routes */}
-          <Route path='/' element={<Landing />} />
-          <Route path='/auth' element={<Auth />} />
+          {/* Public Routes */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/auth" element={<Auth />} />
 
-          {/* Protected routes with Layout */}
+          {/* Protected Routes */}
           <Route element={<Layout />}>
             <Route
-              path='/dashboard'
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
               }
             />
+
             <Route
-              path='/questions/ask'
+              path="/questions/ask"
               element={
                 <ProtectedRoute>
                   <PostQuestion />
                 </ProtectedRoute>
               }
             />
+
             <Route
-              path='/my-questions'
+              path="/my-questions"
               element={
                 <ProtectedRoute>
-                  <h1>My Questions Page</h1>
+                  <MyQuestions />
                 </ProtectedRoute>
               }
             />
+
             <Route
-              path='/questions/:questionHash'
+              path="/questions/:questionHash"
               element={
                 <ProtectedRoute>
-                  <h1>Question Detail Page</h1>
+                  <QuestionDetail />
                 </ProtectedRoute>
               }
             />
+
             <Route
-              path='/rag-documents'
+              path="/rag-documents"
               element={
                 <ProtectedRoute>
                   <h1>RAG Documents Page</h1>
@@ -66,8 +86,11 @@ function App() {
             />
           </Route>
 
-          {/* Catch-all redirect */}
-          <Route path='*' element={<Navigate to='/' replace />} />
+          {/* Catch-All Redirect */}
+          <Route
+            path="*"
+            element={<Navigate to="/" replace />}
+          />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
