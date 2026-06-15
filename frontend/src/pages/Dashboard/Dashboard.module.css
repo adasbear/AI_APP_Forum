@@ -231,6 +231,14 @@
   gap: var(--spacing-xs);
 }
 
+.authorNameItem {
+  color: var(--primary);
+}
+
+.authorName {
+  font-weight: var(--font-medium);
+}
+
 .scoreBadge {
   background-color: var(--primary-light);
   color: var(--primary-dark);

@@ -12,7 +12,22 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    transition: margin-left var(--transition-base);
 }
+
+.sidebarOverlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 45;
+}
+
+@media (max-width: 768px) {
+    .layout__content {
+        margin-left: 0;
+    }
+}
+
 
 .layout__main {
     flex: 1;

@@ -101,6 +101,60 @@ function handleAuthError(error) {
 }
 
 /**
+ * Gets the current user's profile.
+ */
+async function getProfile() {
+  try {
+    const response = await apiClient.get('/api/auth/profile');
+    return response.data.profile;
+  } catch (error) {
+    throw handleAuthError(error);
+  }
+}
+
+/**
+ * Updates the user profile.
+ */
+async function updateProfile(data) {
+  try {
+    const response = await apiClient.put('/api/auth/profile', data);
+    return response.data.profile;
+  } catch (error) {
+    throw handleAuthError(error);
+  }
+}
+
+/**
+ * Uploads a new avatar image.
+ */
+async function uploadAvatar(file) {
+  try {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const response = await apiClient.post('/api/auth/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data.avatarUrl;
+  } catch (error) {
+    throw handleAuthError(error);
+  }
+}
+
+/**
+ * Changes the user's password.
+ */
+async function changePassword(data) {
+  try {
+    const response = await apiClient.put('/api/auth/password', data);
+    return response.data;
+  } catch (error) {
+    throw handleAuthError(error);
+  }
+}
+
+/**
  * Service for handling auth-related requests.
  */
 export const authService = {
@@ -110,4 +164,8 @@ export const authService = {
   getStoredToken,
   getStoredUser,
   isAuthenticated,
+  getProfile,
+  updateProfile,
+  uploadAvatar,
+  changePassword,
 };

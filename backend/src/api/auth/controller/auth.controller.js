@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import { registerService, loginService } from '../service/auth.service.js';
+import { registerService, loginService, getProfileService, updateProfileService, changePasswordService } from '../service/auth.service.js';
 
 /**
  * Handles user registration requests.
@@ -54,3 +54,61 @@ export const loginController = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Gets the current user's profile.
+ *
+ * @param {import('express').Request} req - The Express request object.
+ * @param {import('express').Response} res - The Express response object.
+ * @param {import('express').NextFunction} next - The Express next function.
+ */
+export const getProfileController = async (req, res, next) => {
+  try {
+    const userId = req.user.user_id || req.user.id;
+    const profile = await getProfileService(userId);
+    res.status(StatusCodes.OK).json({ success: true, profile });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Updates the current user's profile.
+ *
+ * @param {import('express').Request} req - The Express request object.
+ * @param {import('express').Response} res - The Express response object.
+ * @param {import('express').NextFunction} next - The Express next function.
+ */
+export const updateProfileController = async (req, res, next) => {
+  try {
+    const userId = req.user.user_id || req.user.id;
+    const updatedProfile = await updateProfileService(userId, req.body);
+    res.status(StatusCodes.OK).json({ success: true, profile: updatedProfile });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Changes the current user's password.
+ *
+ * @param {import('express').Request} req - The Express request object.
+ * @param {import('express').Response} res - The Express response object.
+ * @param {import('express').NextFunction} next - The Express next function.
+ */
+export const changePasswordController = async (req, res, next) => {
+  try {
+    const userId = req.user.user_id || req.user.id;
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'currentPassword and newPassword are required.' });
+    }
+
+    await changePasswordService(userId, currentPassword, newPassword);
+    res.status(StatusCodes.OK).json({ success: true, message: 'Password changed successfully.' });
+  } catch (error) {
+    next(error);
+  }
+};
+

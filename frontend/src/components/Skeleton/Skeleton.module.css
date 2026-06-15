@@ -1,0 +1,38 @@
+.skeleton {
+  background: var(--surface-container-high);
+  background: linear-gradient(
+    90deg,
+    var(--surface-container-high) 25%,
+    var(--surface-container-highest) 50%,
+    var(--surface-container-high) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.text {
+  height: 1.2em;
+  width: 100%;
+  margin-bottom: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.avatar {
+  border-radius: var(--radius-full);
+}
+
+.card {
+  height: 200px;
+  width: 100%;
+  border-radius: var(--radius-lg);
+}

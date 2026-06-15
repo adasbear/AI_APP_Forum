@@ -13,12 +13,12 @@ const NAV_ITEMS = [
   { icon: FileText, label: 'Knowledge Base', path: '/rag-documents' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
       <div className={styles.sidebar__header}>
         <div
           className={styles.sidebar__branding}
@@ -91,10 +91,11 @@ export default function Sidebar() {
             <div className={styles.sidebar__avatar}>
               <img
                 src={
-                  user?.avatar ||
-                  `https://ui-avatars.com/api/?name=${
-                    user?.firstName || 'User'
-                  }+${user?.lastName || ''}&background=random`
+                  (user?.avatarUrl || user?.avatar_url)
+                    ? `${import.meta.env.VITE_API_URL || 'http://localhost:3777'}${user?.avatarUrl || user?.avatar_url}`
+                    : `https://ui-avatars.com/api/?name=${
+                        user?.firstName || 'User'
+                      }+${user?.lastName || ''}&background=random`
                 }
                 alt={`${user?.firstName} ${user?.lastName}`}
                 className={styles['sidebar__avatar-image']}

@@ -228,9 +228,9 @@ export default function Dashboard() {
                       : ''}
                   </p>
                   <div className={styles.questionMeta}>
-                    <span className={styles.metaItem}>
+                    <span className={`${styles.metaItem} ${styles.authorNameItem}`}>
                       <User size={14} />
-                      <span>{authorName}</span>
+                      <span className={styles.authorName}>{authorName}</span>
                     </span>
                     <span className={styles.metaItem}>
                       <Clock size={14} />

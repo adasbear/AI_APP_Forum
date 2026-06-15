@@ -44,18 +44,19 @@ export default function MyQuestions() {
               <div
                 key={q.id}
                 style={{
-                  border: '1px solid #ddd',
-                  padding: '15px',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
+                  border: '1px solid var(--border)',
+                  padding: 'var(--spacing-md)',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--surface)',
+                  transition: 'background-color var(--transition-fast), border-color var(--transition-fast)'
                 }}
               >
-                <h3 style={{ margin: '0 0 10px 0' }}>{q.title}</h3>
-                <p style={{ margin: '0 0 10px 0', color: '#666' }}>
+                <h3 style={{ margin: '0 0 var(--spacing-sm) 0', color: 'var(--text-primary)' }}>{q.title}</h3>
+                <p style={{ margin: '0 0 var(--spacing-sm) 0', color: 'var(--text-secondary)' }}>
                   {q.content}
                 </p>
-                <small style={{ color: '#999' }}>
-                  {q.answerCount} answer(s) • By {q.author.firstName} {q.author.lastName}
+                <small style={{ color: 'var(--text-tertiary)' }}>
+                  {q.answerCount} answer(s) • By <span style={{ color: 'var(--primary)', fontWeight: 'var(--font-medium)' }}>{q.author.firstName} {q.author.lastName}</span>
                 </small>
               </div>
             ))}

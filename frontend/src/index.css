@@ -14,6 +14,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
+  /* Light theme defaults */
+  --color-bg: var(--background);
+  --color-text: var(--text-primary);
+  --color-primary: var(--primary);
+  /* Dark theme overrides will be applied via [data-theme="dark"] */
+
   /* Primary colors (Orange-based) */
   --primary: #f97316; /* Tailwind Orange-500 */
   --primary-hover: #ea580c; /* Tailwind Orange-600 */
@@ -124,6 +130,24 @@
   --app-form-max: 28rem;
 }
 
+[data-theme="dark"] {
+  --background: #0E1116; /* Deep dark canvas */
+  --background-secondary: #0E1116; 
+  --surface: #171B22; /* Slightly lighter containers */
+  --surface-hover: #21262D;
+  --surface-container-low: #171B22;
+  --surface-container-high: #21262D;
+  --surface-container-highest: #30363D;
+  --text-primary: #F0F3F6; /* Comfortable off-white */
+  --text-secondary: #8B949E; /* Muted gray */
+  --text-tertiary: #8B949E;
+  --primary: #FF7A29; /* Calibrated brand orange */
+  --primary-hover: #e86b20;
+  --border: #21262D; /* Subtle divider lines */
+  --border-hover: #30363D;
+}
+
+
 /* Global Resets */
 *,
 *::before,
@@ -225,4 +249,62 @@ h5 {
 }
 h6 {
   font-size: var(--text-base);
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast {
+  background-color: var(--surface);
+  color: var(--text-primary);
+  padding: 16px 24px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  pointer-events: auto;
+  animation: slideInRight 0.3s ease-out forwards, fadeOut 0.3s ease-in 2.7s forwards;
+  min-width: 250px;
+  border-left: 4px solid var(--border);
+}
+
+.toast-success {
+  border-left-color: var(--success);
+}
+
+.toast-error {
+  border-left-color: var(--error);
+}
+
+.toast-info {
+  border-left-color: var(--info);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }

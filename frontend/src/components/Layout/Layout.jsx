@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../Navbar/Navbar.jsx';
@@ -11,6 +12,10 @@ import styles from './Layout.module.css';
 export default function Layout() {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   /** Navbar title: keep in sync with routes in `App.jsx`. */
   const getTitle = () => {
@@ -20,6 +25,7 @@ export default function Layout() {
     if (path === '/questions/ask') return 'Ask a question';
     if (path.startsWith('/questions/')) return 'Discussion';
     if (path === '/rag-documents') return 'Knowledge base';
+    if (path === '/profile') return 'Profile';
     return 'Forum';
   };
 
@@ -36,18 +42,25 @@ export default function Layout() {
       return 'Read the thread, review related topics, and reply with markdown if you can help.';
     if (path === '/rag-documents')
       return 'Private PDF library: reader, semantic search, and AI answers with citations per document.';
+    if (path === '/profile')
+      return 'Manage your personal information and view stats.';
     return '';
   };
 
   return (
     <div className={styles.layout}>
-      <Sidebar />
+      {/* Mobile overlay */}
+      {isSidebarOpen && (
+        <div className={styles.sidebarOverlay} onClick={closeSidebar} aria-hidden="true" />
+      )}
+      <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
       <div className={styles.layout__content}>
         <Navbar
           title={getTitle()}
           subtitle={getSubtitle()}
           user={user}
           onLogout={logout}
+          onMenuToggle={toggleSidebar}
         />
         <main className={styles.layout__main}>
           <div className={styles.layout__mainInner}>

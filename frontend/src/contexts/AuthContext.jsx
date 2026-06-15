@@ -70,6 +70,16 @@ export function AuthProvider({ children }) {
     navigate('/auth');
   };
 
+  /**
+   * Updates the current user's details in state and localStorage.
+   * @param {Object} updatedData - { firstName, lastName, avatarUrl, etc. }
+   */
+  const updateUser = (updatedData) => {
+    const newUser = { ...user, ...updatedData };
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+  };
+
   // Context value with state and methods
   const value = {
     user,
@@ -77,6 +87,7 @@ export function AuthProvider({ children }) {
     register,
     login,
     logout,
+    updateUser,
     isAuthenticated: !!user,
   };
 

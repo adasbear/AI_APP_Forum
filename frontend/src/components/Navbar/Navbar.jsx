@@ -1,33 +1,52 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, LogOut, Sparkles } from 'lucide-react';
+import {
+  Search,
+  LogOut,
+  Sparkles,
+  Moon,
+  Sun,
+  Menu,
+} from 'lucide-react';
+
 import styles from './Navbar.module.css';
+import { useTheme } from '../../contexts/ThemeContext.jsx';
 
 /**
- * Top bar: page title, debounced text search → `/dashboard?q=…`, optional AI semantic search.
- * Search state is driven by the URL on the dashboard so bookmarks and refresh keep context.
+ * Professional Navbar Component
  */
-export default function Navbar({ title, subtitle, user, onLogout }) {
+export default function Navbar({
+  title,
+  subtitle,
+  user,
+  onLogout,
+  onMenuToggle,
+}) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Initialize searchTerm from URL if we are already on the dashboard
+  const { theme, toggleTheme } = useTheme();
+
+  // Initialize search term from URL
   const [searchTerm, setSearchTerm] = useState(() => {
     const params = new URLSearchParams(location.search);
     return params.get('q') || params.get('semantic') || '';
   });
 
-  // Keep input in sync with URL if it changes externally
+  // Sync search with URL
   useEffect(() => {
     if (location.pathname === '/dashboard') {
       const params = new URLSearchParams(location.search);
-      setSearchTerm(params.get('q') || params.get('semantic') || '');
+
+      setSearchTerm(
+        params.get('q') || params.get('semantic') || ''
+      );
     } else {
       setSearchTerm('');
     }
   }, [location.search, location.pathname]);
 
-  // Debounced keyword search: updates `?q=` on the dashboard (500ms quiet period).
+  // Debounced search
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (searchTerm.trim() !== '') {
@@ -41,17 +60,21 @@ export default function Navbar({ title, subtitle, user, onLogout }) {
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, navigate, location.pathname]);
+  }, [searchTerm, navigate, location.pathname, location.search]);
 
   const handleSemanticSearch = e => {
     e.preventDefault();
+
     if (searchTerm.trim().length >= 3) {
-      navigate(`/dashboard?semantic=${encodeURIComponent(searchTerm)}`);
+      navigate(
+        `/dashboard?semantic=${encodeURIComponent(searchTerm)}`
+      );
     }
   };
 
   const handleSearchSubmit = e => {
     e.preventDefault();
+
     if (searchTerm.trim()) {
       navigate(`/dashboard?q=${encodeURIComponent(searchTerm)}`);
     }
@@ -59,57 +82,133 @@ export default function Navbar({ title, subtitle, user, onLogout }) {
 
   return (
     <header className={styles.navbar}>
+      {/* Mobile Menu */}
+      <button
+        className={styles.menuToggle}
+        onClick={onMenuToggle}
+        aria-label='Open menu'
+      >
+        <Menu size={24} />
+      </button>
+
+      {/* Title */}
       <div className={styles.navbar__titleBlock}>
-        <h2 className={styles.navbar__pageTitle}>{title}</h2>
+        <h2 className={styles.navbar__pageTitle}>
+          {title}
+        </h2>
+
         {subtitle ? (
-          <p className={styles.navbar__pageSubtitle}>{subtitle}</p>
+          <p className={styles.navbar__pageSubtitle}>
+            {subtitle}
+          </p>
         ) : null}
       </div>
 
-      <form className={styles.navbar__search} onSubmit={handleSearchSubmit}>
-        <div className={styles['navbar__search-icon']}>
+      {/* Search */}
+      <form
+        className={styles.navbar__search}
+        onSubmit={handleSearchSubmit}
+      >
+        <div className={styles.navbar__searchIcon}>
           <Search size={16} />
         </div>
+
         <input
           id='search'
           type='text'
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          placeholder='Search questions by keyword…'
-          className={styles['navbar__search-input']}
-          aria-label='Search questions by keyword'
+          placeholder='Search questions by keyword...'
+          className={styles.navbar__searchInput}
+          aria-label='Search questions'
         />
+
         {searchTerm.length >= 3 && (
           <button
             type='button'
             onClick={handleSemanticSearch}
-            className={styles['navbar__semantic-button']}
+            className={styles.navbar__semanticButton}
             title='Use AI Semantic Search'
           >
             <Sparkles size={14} />
-            <span className={styles['navbar__semantic-text']}>AI Search</span>
+
+            <span className={styles.navbar__semanticText}>
+              AI Search
+            </span>
           </button>
         )}
       </form>
 
+      {/* Actions */}
       <div className={styles.navbar__actions}>
-        <div className={styles.navbar__user}>
-          <span className={styles['navbar__user-name']}>
-            {user ? `${user.firstName} ${user.lastName}` : 'Guest'}
-          </span>
-          <div className={styles['navbar__user-avatar']}>
-            <img
-              src={
-                user?.avatar ||
-                `https://ui-avatars.com/api/?name=${
-                  user?.firstName || 'User'
-                }+${user?.lastName || ''}&background=random`
-              }
-              alt='avatar'
-              referrerPolicy='no-referrer'
-            />
+        {/* Professional Theme Toggle */}
+        <button
+          type='button'
+          className={`${styles.themeToggle} ${theme === 'dark'
+              ? styles.dark
+              : styles.light
+            }`}
+          onClick={toggleTheme}
+          aria-label='Toggle theme'
+          title='Toggle dark / light mode'
+        >
+          <div className={styles.themeToggleTrack}>
+            <div className={styles.themeToggleThumb}>
+              {theme === 'light' ? (
+                <Moon
+                  size={16}
+                  className={styles.themeIcon}
+                />
+              ) : (
+                <Sun
+                  size={16}
+                  className={styles.themeIcon}
+                />
+              )}
+            </div>
+
+            <div className={styles.themeToggleBgIcons}>
+              <Sun
+                size={14}
+                className={styles.sunIcon}
+              />
+
+              <Moon
+                size={14}
+                className={styles.moonIcon}
+              />
+            </div>
           </div>
+        </button>
+
+        {/* User */}
+        <div className={styles.navbar__user}>
+          <a
+            href='/profile'
+            className={styles.navbar__userLink}
+          >
+            <span className={styles.navbar__userName}>
+              {user
+                ? `${user.firstName} ${user.lastName}`
+                : 'Guest'}
+            </span>
+
+            <div className={styles.navbar__userAvatar}>
+              <img
+                src={
+                  (user?.avatarUrl || user?.avatar_url)
+                    ? `${import.meta.env.VITE_API_URL || 'http://localhost:3777'}${user?.avatarUrl || user?.avatar_url}`
+                    : `https://ui-avatars.com/api/?name=${user?.firstName || 'User'
+                      }+${user?.lastName || ''}&background=random`
+                }
+                alt='avatar'
+                referrerPolicy='no-referrer'
+              />
+            </div>
+          </a>
         </div>
+
+        {/* Logout */}
         {user && (
           <button
             type='button'

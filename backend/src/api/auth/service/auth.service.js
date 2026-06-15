@@ -118,7 +118,86 @@ export const loginService = async ({ email, password }) => {
       firstName: user.first_name,
       lastName: user.last_name,
       email: user.email,
+      avatar_url: user.avatar_url,
     },
     token,
   };
+};
+
+/**
+ * Gets a user's profile including stats.
+ *
+ * @param {number} userId - The user ID.
+ * @returns {Promise<Object>} The user profile data.
+ */
+export const getProfileService = async (userId) => {
+  const sql = `
+    SELECT 
+      u.user_id as id, u.first_name as firstName, u.last_name as lastName, u.email, u.avatar_url as avatarUrl, u.bio,
+      (SELECT COUNT(*) FROM questions q WHERE q.user_id = u.user_id) AS questionsAsked,
+      (SELECT COUNT(*) FROM answers a WHERE a.user_id = u.user_id) AS answersGiven
+    FROM users u
+    WHERE u.user_id = ?
+  `;
+  const rows = await safeExecute(sql, [userId]);
+  if (rows.length === 0) {
+    throw new UnauthenticatedError("User not found");
+  }
+  return rows[0];
+};
+
+/**
+ * Updates a user's profile details.
+ *
+ * @param {number} userId - The user ID.
+ * @param {Object} updateData - Data to update.
+ * @returns {Promise<Object>} The updated profile.
+ */
+export const updateProfileService = async (userId, { firstName, lastName, bio, avatarUrl }) => {
+  const sql = `
+    UPDATE users 
+    SET first_name = COALESCE(?, first_name),
+        last_name = COALESCE(?, last_name),
+        bio = COALESCE(?, bio),
+        avatar_url = COALESCE(?, avatar_url)
+    WHERE user_id = ?
+  `;
+  await safeExecute(sql, [
+    firstName !== undefined ? firstName : null,
+    lastName !== undefined ? lastName : null,
+    bio !== undefined ? bio : null,
+    avatarUrl !== undefined ? avatarUrl : null,
+    userId
+  ]);
+  return getProfileService(userId);
+};
+
+/**
+ * Changes a user's password.
+ *
+ * @param {number} userId - The user ID.
+ * @param {string} currentPassword - The current password.
+ * @param {string} newPassword - The new password.
+ * @returns {Promise<void>}
+ */
+export const changePasswordService = async (userId, currentPassword, newPassword) => {
+  const sql = "SELECT password_hash FROM users WHERE user_id = ? LIMIT 1";
+  const rows = await safeExecute(sql, [userId]);
+  
+  if (rows.length === 0) {
+    throw new UnauthenticatedError("User not found");
+  }
+
+  const user = rows[0];
+  const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+
+  if (!isMatch) {
+    throw new BadRequestError("Incorrect current password");
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+  const updateSql = "UPDATE users SET password_hash = ? WHERE user_id = ?";
+  await safeExecute(updateSql, [hashedNewPassword, userId]);
 };
