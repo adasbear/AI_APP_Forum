@@ -1,15 +1,17 @@
 import express from "express";
-import { authenticateUser } from "../../../middleware/authentication.js";
-import { getDocumentMetaController, queryDocumentController } from "../controller/rag.controller.js";
-import { documentIdParamValidation, queryDocumentValidation } from "../validations/rag.validation.js";
 
 const router = express.Router();
 
-/**
- * @route GET /api/rag/documents/:documentId
- * @desc Get RAG Document Metadata
- * @access Private
- */
+
+import { authenticateUser } from "../../../middleware/authentication.js";
+import { getDocumentMetaController, queryDocumentController } from "../controller/rag.controller.js";
+import { documentIdParamValidation, queryDocumentValidation } from "../validations/rag.validation.js";
+import { createDocumentController } from "../controller/rag.controller.js";
+import { uploadDocument } from "../../../middleware/rag.upload.config.js";
+import { authenticateUser } from "../../../middleware/authentication.js";
+import { searchInDocumentController } from "../controller/rag.controller.js";
+
+const router = express.Router();
 
 router.get(
   "/documents/:documentId",
@@ -18,16 +20,24 @@ router.get(
   getDocumentMetaController
 );
 
-/**
- * @route POST /api/rag/documents/:documentId/query
- * @desc Query a RAG document
- * @access Private
- */
+router.post(
+  "/documents",
+  authenticateUser,
+  uploadDocument.single("file"),
+  createDocumentController,
+);
+
 router.post(
   "/documents/:documentId/query",
   authenticateUser,
   queryDocumentValidation,
-  queryDocumentController
+  queryDocumentController,
+  );
+
+router.get(
+  "/documents/:documentId/search",
+  authenticateUser,
+  searchInDocumentController,
 );
 
 export default router;
