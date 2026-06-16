@@ -205,7 +205,8 @@ export default function QuestionDetail() {
     try {
       const { bookmarkService } = await import('../../services/bookmarks/bookmark.service.js');
       const res = await bookmarkService.toggleBookmark(question.id);
-      setIsBookmarked(res.bookmarked);
+      const isBookmarked = res.data?.bookmarked ?? res.bookmarked;
+      setIsBookmarked(isBookmarked);
     } catch (err) {
       console.error("Failed to toggle bookmark", err);
       setIsBookmarked(prevBookmarked);

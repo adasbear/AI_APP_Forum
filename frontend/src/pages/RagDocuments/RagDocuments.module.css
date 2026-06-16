@@ -3,16 +3,16 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 30px;
-  background-color: #ffffff;
+  background-color: var(--background);
   min-height: 100vh;
 }
 
 .pageHeader {
   margin-bottom: 30px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 30px;
-  background-color: #ffffff;
+  background-color: var(--surface);
 }
 
 .pageLabel {
@@ -28,12 +28,12 @@
   font-size: 28px;
   font-weight: bold;
   margin: 0 0 15px 0;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .pageSubtitle {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.6;
   max-width: 800px;
   margin: 0;
@@ -48,10 +48,10 @@
 /* LEFT SIDEBAR */
 .sidebar {
   width: 380px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 24px;
-  background-color: #fff;
+  background-color: var(--surface);
   flex-shrink: 0;
 }
 
@@ -63,26 +63,27 @@
   margin: 0 0 5px 0;
   font-size: 18px;
   font-weight: bold;
+  color: var(--text-primary);
 }
 
 .sidebarSubtitle {
   margin: 0;
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 /* UPLOAD SECTION */
 .uploadBox {
-  border: 1px dashed #ccc;
+  border: 1px dashed var(--border);
   border-radius: 8px;
   padding: 24px;
   margin-bottom: 24px;
-  background-color: #fcfcfc;
+  background-color: var(--surface-container-low);
 }
 
 .uploadText {
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0 0 15px 0;
   line-height: 1.5;
 }
@@ -95,13 +96,13 @@
 .chooseFileBtn {
   flex: 1;
   padding: 10px 15px;
-  border: 1px solid #ccc;
-  background-color: #fff;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,7 +111,7 @@
 }
 
 .chooseFileBtn:hover {
-  background-color: #f5f5f5;
+  background-color: var(--surface-hover);
 }
 
 .uploadBtn {
@@ -141,7 +142,7 @@
 
 .fileSelected {
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
   margin: 12px 0 0 0;
   font-style: italic;
 }
@@ -160,8 +161,8 @@
 .docItem {
   padding: 16px;
   margin-bottom: 12px;
-  background-color: #fff;
-  border: 1px solid #eee;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
   display: flex;
@@ -171,7 +172,8 @@
 }
 
 .docItem:hover {
-  border-color: #ccc;
+  border-color: var(--border-hover);
+  background-color: var(--surface-hover);
 }
 
 .docItem.active {
@@ -187,7 +189,7 @@
   margin: 0 0 8px 0;
   font-weight: bold;
   font-size: 14px;
-  color: #111;
+  color: var(--text-primary);
   word-break: break-all;
 }
 
@@ -232,9 +234,9 @@
 /* RIGHT COLUMN */
 .mainContent {
   flex: 1;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background-color: #fff;
+  background-color: var(--surface);
   min-height: 600px;
   display: flex;
   flex-direction: column;
@@ -246,11 +248,11 @@
   justify-content: center;
   padding: 60px;
   text-align: center;
-  color: #666;
+  color: var(--text-secondary);
   font-size: 15px;
   height: 100%;
   flex: 1;
-  background-color: #f8f9fa;
+  background-color: var(--surface-container-low);
   border-radius: 12px;
 }
 
@@ -271,31 +273,32 @@
   font-size: 16px;
   font-weight: bold;
   margin: 0 0 5px 0;
-  color: #111;
+  color: var(--text-primary);
 }
 
 .sectionSubtitle {
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0 0 20px 0;
   line-height: 1.5;
 }
 
 .divider {
   border: none;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border);
   margin: 0;
 }
 
 /* READER PREVIEW */
 .previewBox {
   height: 400px;
-  background-color: #f1f3f4;
+  background-color: var(--surface-container-low);
   border-radius: 8px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid var(--border);
 }
 
 .pdfIframe {
@@ -315,16 +318,17 @@
 .inputLabel {
   font-size: 13px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-secondary);
 }
 
 .textInput {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
-  background-color: #fff;
+  background-color: var(--surface-container-low);
+  color: var(--text-primary);
   outline: none;
   transition: border-color 0.2s;
 }
@@ -336,10 +340,11 @@
 .textArea {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
-  background-color: #fff;
+  background-color: var(--surface-container-low);
+  color: var(--text-primary);
   outline: none;
   resize: vertical;
   min-height: 80px;
@@ -379,12 +384,12 @@
 .answerBox {
   margin-top: 16px;
   padding: 16px;
-  background-color: #f8f9fa;
+  background-color: var(--surface-container-low);
   border-radius: 8px;
   border-left: 3px solid var(--primary);
   font-size: 14px;
   line-height: 1.6;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .errorAnswerBox {
@@ -397,6 +402,32 @@
   font-size: 14px;
 }
 
+.citationsBox {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.citationsTitle {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--text-secondary);
+}
+
+.citationsBox ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.citationsBox li {
+  margin-bottom: 4px;
+}
+
 .resultsArea {
   margin-top: 16px;
   display: flex;
@@ -405,12 +436,13 @@
 }
 
 .searchResult {
-  background-color: #f8f9fa;
+  background-color: var(--surface-container-low);
   padding: 16px;
   border-radius: 8px;
   font-size: 14px;
   line-height: 1.6;
-  color: #333;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
 }
 
 .resultText {
@@ -424,12 +456,12 @@
 
 /* LOADING TEXT */
 .loadingText {
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 14px;
 }
 
 .emptyMessage {
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 14px;
   text-align: center;
 }

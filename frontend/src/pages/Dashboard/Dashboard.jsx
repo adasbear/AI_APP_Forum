@@ -164,10 +164,11 @@ export default function Dashboard() {
       const { bookmarkService } = await import('../../services/bookmarks/bookmark.service.js');
       const response = await bookmarkService.toggleBookmark(questionId);
       
-      // Sync with actual backend state
+      // Sync with actual backend state (response.data.bookmarked)
+      const isBookmarked = response.data?.bookmarked ?? response.bookmarked;
       setQuestions(prev => prev.map(q => {
         if (q.id === questionId) {
-          return { ...q, isBookmarked: response.bookmarked };
+          return { ...q, isBookmarked };
         }
         return q;
       }));

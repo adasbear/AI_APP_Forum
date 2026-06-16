@@ -73,21 +73,42 @@ export const getDocumentFileController = async (req, res, next) => {
     const userId = req.user?.id;
     const { documentId } = req.params;
     const document = await assertOwnedDocument(documentId, userId);
-    const uploadDir = process.env.RAG_UPLOAD_DIR || "uploads/rag";
-    const absoluteFilePath = path.resolve(
-      process.cwd(),
-      uploadDir,
-      document.storage_path,
-    );
+    
+    // storage_path is relative path like "uploads/rag/1234567890-file.pdf"
+    const absoluteFilePath = path.resolve(process.cwd(), document.storage_path);
+    
+    console.log('Attempting to serve PDF:', {
+      documentId,
+      storage_path: document.storage_path,
+      absolute_path: absoluteFilePath,
+      exists: fs.existsSync(absoluteFilePath)
+    });
+    
     if (!fs.existsSync(absoluteFilePath)) {
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
         message: "File not found on disk",
+        path: document.storage_path,
       });
     }
-    res.setHeader("Content-Type", document.mime_type || "application/pdf");
-    res.sendFile(absoluteFilePath);
+    
+    // Get file stats for proper headers
+    const stat = fs.statSync(absoluteFilePath);
+    const filename = path.basename(absoluteFilePath);
+    
+    // Set headers for inline PDF viewing
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Length", stat.size);
+    res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.setHeader("Accept-Ranges", "bytes");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    
+    // Stream the file
+    const stream = fs.createReadStream(absoluteFilePath);
+    stream.pipe(res);
   } catch (error) {
+    console.error('Error serving PDF:', error);
     next(error);
   }
 };

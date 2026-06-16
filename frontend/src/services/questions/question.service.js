@@ -90,6 +90,9 @@ async function deleteQuestion(questionHash) {
     return response.data;
   } catch (error) {
     throw handleQuestionError(error);
+  }
+}
+
 /**
  * Get similar questions
  */

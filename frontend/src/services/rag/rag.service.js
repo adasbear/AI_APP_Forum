@@ -42,9 +42,11 @@ export const deleteDocument = async (documentId) => {
 export const searchInDocument = async (documentId, query) => {
   try {
     const response = await apiClient.get(
-      `/api/rag/documents/${documentId}/search?q=${encodeURIComponent(query)}`
+      `/api/rag/documents/${documentId}/search?query=${encodeURIComponent(query)}`
     );
-    return response.data.data || [];
+    // Backend returns { query, results: [...] }, we need just the results array
+    const data = response.data.data;
+    return data?.results || [];
   } catch (error) {
     console.error('Error searching document:', error);
     throw error;
@@ -57,6 +59,7 @@ export const queryDocument = async (documentId, query) => {
       `/api/rag/documents/${documentId}/query`,
       { query }
     );
+    // Backend returns { answer, citations, chunksUsed }
     return response.data.data;
   } catch (error) {
     console.error('Error querying document:', error);

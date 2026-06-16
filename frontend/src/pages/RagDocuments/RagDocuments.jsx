@@ -9,6 +9,7 @@ import {
   fetchPdfObjectUrl
 } from '../../services/rag/rag.service';
 import { Upload, FileText, Sparkles, Search, Trash2 } from 'lucide-react';
+import RagAnswerBody from '../../components/RagAnswerBody/RagAnswerBody';
 
 export default function RagDocuments() {
   const [documents, setDocuments] = useState([]);
@@ -20,7 +21,7 @@ export default function RagDocuments() {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [aiAnswer, setAiAnswer] = useState('');
+  const [aiAnswer, setAiAnswer] = useState(null);
   const [isQueryingAI, setIsQueryingAI] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const fileInputRef = React.useRef(null);
@@ -98,10 +99,11 @@ export default function RagDocuments() {
 
     try {
       setIsQueryingAI(true);
-      const answer = await queryDocument(activeDocument.id, query);
-      setAiAnswer(answer || 'No answer received');
+      const result = await queryDocument(activeDocument.id, query);
+      // Result contains { answer, citations, chunksUsed }
+      setAiAnswer(result);
     } catch (err) {
-      setAiAnswer('Error: ' + err.message);
+      setAiAnswer({ answer: 'Error: ' + err.message, citations: [], chunksUsed: [] });
     } finally {
       setIsQueryingAI(false);
     }
@@ -128,16 +130,22 @@ export default function RagDocuments() {
   const handlePreview = async (docId) => {
     if (!docId) return;
     try {
+      setPdfUrl(null); // Clear previous PDF
+      console.log('Fetching PDF for document:', docId);
       const url = await fetchPdfObjectUrl(docId);
+      console.log('PDF URL created:', url);
       setPdfUrl(url);
     } catch (err) {
-      console.error('Failed to load PDF: ' + err.message);
+      console.error('Failed to load PDF:', err);
+      alert('Failed to load PDF: ' + err.message);
     }
   };
 
   useEffect(() => {
     if (activeDocument && activeDocument.status === 'ready') {
       handlePreview(activeDocument.id);
+    } else {
+      setPdfUrl(null); // Clear PDF if document is not ready
     }
   }, [activeDocument]);
 
@@ -219,10 +227,9 @@ export default function RagDocuments() {
               key={doc.id}
               onClick={() => {
                 setActiveDocument(doc);
-                setActiveTab('ask');
                 setPdfUrl(null);
                 setSearchResults([]);
-                setAiAnswer('');
+                setAiAnswer(null);
                 setQuery('');
               }}
               className={`${styles.docItem} ${activeDocument?.id === doc.id ? styles.active : ''}`}
@@ -255,9 +262,9 @@ export default function RagDocuments() {
               Choose a document from the library to open the reader, run semantic search over its text, and ask questions with AI-assisted answers grounded in that file.
             </p>
           </div>
-        ) : activeDocument.status === 'processing' ? (
+        ) : activeDocument.status !== 'ready' ? (
           <div className={styles.emptyState}>
-            <p>This document is not ready for preview or AI tools. Current status: <strong>processing</strong>.</p>
+            <p>This document is not ready for preview or AI tools. Current status: <strong>{activeDocument.status}</strong>.</p>
           </div>
         ) : (
           <div className={styles.documentContainer}>
@@ -267,11 +274,18 @@ export default function RagDocuments() {
               <p className={styles.sectionSubtitle}>Inline preview of the selected PDF.</p>
               <div className={styles.previewBox}>
                 {pdfUrl ? (
-                  <iframe
-                    src={pdfUrl}
+                  <object
+                    data={pdfUrl}
+                    type="application/pdf"
                     className={styles.pdfIframe}
-                    title="PDF Preview"
-                  />
+                    aria-label="PDF Preview"
+                  >
+                    <embed
+                      src={pdfUrl}
+                      type="application/pdf"
+                      className={styles.pdfIframe}
+                    />
+                  </object>
                 ) : (
                   <p className={styles.loadingText}>Loading PDF...</p>
                 )}
@@ -339,8 +353,20 @@ export default function RagDocuments() {
               </div>
 
               {aiAnswer && (
-                <div className={aiAnswer.startsWith('Error') ? styles.errorAnswerBox : styles.answerBox}>
-                  {aiAnswer}
+                <div className={aiAnswer.answer?.startsWith('Error') ? styles.errorAnswerBox : styles.answerBox}>
+                  <RagAnswerBody>{aiAnswer.answer}</RagAnswerBody>
+                  {aiAnswer.citations && aiAnswer.citations.length > 0 && (
+                    <div className={styles.citationsBox}>
+                      <p className={styles.citationsTitle}>Citations:</p>
+                      <ul>
+                        {aiAnswer.citations.map((citation, idx) => (
+                          <li key={idx}>
+                            [Chunk {citation.chunkIndex}]
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

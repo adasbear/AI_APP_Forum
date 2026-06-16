@@ -7,9 +7,11 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function test() {
   try {
-    const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+    // Use correct embedding model name
+    const modelName = process.env.GEMINI_EMBEDDING_MODEL || "gemini-embedding-001";
+    const model = genAI.getGenerativeModel({ model: modelName });
     const result = await model.embedContent("test query");
-    console.log("Success! Embedding length:", result.embedding.values.length);
+    console.log(`Success with ${modelName}! Embedding length:`, result.embedding.values.length);
   } catch (error) {
     console.error("Error:", error);
   }

@@ -1,9 +1,14 @@
 import { StatusCodes } from 'http-status-codes';
 
 export const errorHandler = (err, req, res, next) => {
-  console.error("Backend Error:", err);
+  // Only log unexpected server errors (5xx), not client errors (4xx)
+  const statusCode = err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+  if (statusCode >= 500) {
+    console.error("Backend Error:", err);
+  }
+  
   let customError = {
-    statusCode: err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
+    statusCode: statusCode,
     msg: err.message || 'Something went wrong try again later',
   };
 

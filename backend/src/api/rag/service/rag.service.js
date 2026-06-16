@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
-import { PDFParse } from "pdf-parse";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const { PDFParse } = require("pdf-parse");
 
 import { safeExecute } from "../../../../db/config.js";
 import { chunkText } from "../../../utils/chunking.js";
@@ -148,6 +150,11 @@ export async function createDocumentFromUploadService({ file, userId }) {
   let documentId = null;
 
   try {
+    // Store relative path instead of absolute path
+    const uploadDir = process.env.RAG_UPLOAD_DIR || "uploads/rag";
+    const fileName = path.basename(file.path);
+    const relativePath = path.join(uploadDir, fileName);
+
     const insertDocumentSql = `
       INSERT INTO documents
       (
@@ -165,19 +172,36 @@ export async function createDocumentFromUploadService({ file, userId }) {
       userId,
       file.originalname,
       file.mimetype,
-      file.path,
+      relativePath,
       file.size,
       "processing",
     ]);
 
     documentId = documentResult.insertId;
 
-    const buffer = fs.readFileSync(file.path);
+    let buffer = fs.readFileSync(file.path);
+    
+    // Convert Buffer to Uint8Array (pdf-parse v2.4.5 requires Uint8Array)
+    if (Buffer.isBuffer(buffer)) {
+      buffer = new Uint8Array(buffer);
+    }
 
-    const parser = new PDFParse({ data: buffer });
+    console.log('Processing PDF:', {
+      originalName: file.originalname,
+      size: file.size,
+      path: file.path
+    });
+
+    // Create PDF parser instance and extract text
+    const parser = new PDFParse(buffer);
     const result = await parser.getText();
 
     const extractedText = result.text?.trim();
+
+    console.log('PDF text extracted:', {
+      textLength: extractedText?.length || 0,
+      firstChars: extractedText?.substring(0, 100)
+    });
 
     if (!extractedText) {
       throw new Error("No text could be extracted from PDF");
@@ -185,12 +209,19 @@ export async function createDocumentFromUploadService({ file, userId }) {
 
     const chunks = chunkText(extractedText, 1000, 150);
 
+    console.log('Text chunked:', {
+      totalChunks: chunks.length,
+      firstChunkLength: chunks[0]?.length
+    });
+
     if (!chunks?.length) {
       throw new Error("Chunking failed: no text chunks created");
     }
 
     for (let index = 0; index < chunks.length; index++) {
       const chunk = chunks[index];
+
+      console.log(`Processing chunk ${index + 1}/${chunks.length}`);
 
       const embeddingResult = await generateQuestionEmbedding(chunk);
 
@@ -227,6 +258,8 @@ export async function createDocumentFromUploadService({ file, userId }) {
         [chunkId, chunk, JSON.stringify(embeddingResult.embedding), "ready"],
       );
     }
+
+    console.log('All chunks processed successfully');
 
     await safeExecute(
       `
