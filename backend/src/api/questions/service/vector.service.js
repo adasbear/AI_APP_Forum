@@ -22,11 +22,17 @@ const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
  */
 export const generateQuestionEmbedding = async (text, options = {}) => {
   try {
-    const response = await ai.models.embedContent({
+    const params = {
       model: GEMINI_EMBEDDING_MODEL,
-      contents: [text],
-      ...options,
-    });
+      contents: text,
+    };
+
+    // If options are provided, wrap them in config
+    if (Object.keys(options).length > 0) {
+      params.config = options;
+    }
+
+    const response = await ai.models.embedContent(params);
 
     const embedding = response.embeddings?.[0]?.values;
     if (!embedding || !Array.isArray(embedding)) {

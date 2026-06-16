@@ -6,6 +6,8 @@ import {
   getSingleQuestionController,
   searchQuestionsSemanticController,
   getSimilarQuestionsController,
+  generateQuestionDraftCoachController,
+  evaluateAnswerFit,
 } from "../controller/question.controller.js";
 
 import {
@@ -14,6 +16,7 @@ import {
   getSingleQuestionValidation,
   validateSearchQuestions,
   validateSimilarQuestions,
+  generateQuestionDraftCoachValidation,
 } from "../validations/question.validation.js";
 
 import { authenticateUser } from "../../../middleware/authentication.js";
@@ -21,9 +24,11 @@ import { validationErrorHandler } from "../../../middleware/validation-handler.j
 
 const router = express.Router();
 
-import { generateQuestionDraftCoachController } from "../controller/question.controller.js";
-import { generateQuestionDraftCoachValidation } from "../validations/question.validation.js";
-
+/**
+ * @route POST /api/questions/draft-coach
+ * @desc Get AI coaching feedback on question draft
+ * @access Private
+ */
 router.post(
   '/draft-coach',
   authenticateUser,
@@ -32,7 +37,7 @@ router.post(
 );
 
 /**
- * @route get /api/questions/search
+ * @route GET /api/questions/search
  * @desc Semantic search for similar questions based on text input
  * @access Private
  * @query text - The input text to search for similar questions
@@ -45,7 +50,16 @@ router.get(
   searchQuestionsSemanticController
 );
 
-
+/**
+ * @route POST /api/questions/:questionHash/answer-fit
+ * @desc Evaluates how well an answer addresses a question using AI
+ * @access Private
+ */
+router.post(
+  "/:questionHash/answer-fit",
+  authenticateUser,
+  evaluateAnswerFit,
+);
 
 /**
  * @route POST /api/questions
@@ -74,18 +88,23 @@ router.get(
 );
 
 /**
- * @route GET /api/questions/:questionHash
- * @desc Fetch a specific question and all its answers
+ * @route GET /api/questions/:questionHash/similar
+ * @desc Get similar questions based on vector embeddings
  * @access Private
- * @param questionHash - 16-character hex string
  */
 router.get(
   '/:questionHash/similar',
   validateSimilarQuestions,
   validationErrorHandler,
   getSimilarQuestionsController
-  );
+);
 
+/**
+ * @route GET /api/questions/:questionHash
+ * @desc Fetch a specific question and all its answers
+ * @access Private
+ * @param questionHash - 16-character hex string
+ */
 router.get(
   "/:questionHash",
   authenticateUser,

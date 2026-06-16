@@ -8,11 +8,11 @@ import {
   searchInDocument,
   fetchPdfObjectUrl
 } from '../../services/rag/rag.service';
+import { Upload, FileText, Sparkles, Search, Trash2 } from 'lucide-react';
 
 export default function RagDocuments() {
   const [documents, setDocuments] = useState([]);
   const [activeDocument, setActiveDocument] = useState(null);
-  const [activeTab, setActiveTab] = useState('ask');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -125,22 +125,41 @@ export default function RagDocuments() {
     }
   };
 
-  const handlePreview = async () => {
-    if (pdfUrl) return;
-
+  const handlePreview = async (docId) => {
+    if (!docId) return;
     try {
-      const url = await fetchPdfObjectUrl(activeDocument.id);
+      const url = await fetchPdfObjectUrl(docId);
       setPdfUrl(url);
     } catch (err) {
-      alert('Failed to load PDF: ' + err.message);
+      console.error('Failed to load PDF: ' + err.message);
     }
   };
 
+  useEffect(() => {
+    if (activeDocument && activeDocument.status === 'ready') {
+      handlePreview(activeDocument.id);
+    }
+  }, [activeDocument]);
+
   return (
-    <div className={styles.container}>
-      {/* LEFT SIDEBAR */}
-      <div className={styles.sidebar}>
-        <h2 className={styles.sidebarTitle}>Library</h2>
+    <div className={styles.pageWrapper}>
+      <div className={styles.pageHeader}>
+        <p className={styles.pageLabel}>KNOWLEDGE BASE</p>
+        <h1 className={styles.pageTitle}>Private PDF library</h1>
+        <p className={styles.pageSubtitle}>
+          Upload study or reference PDFs to your own workspace. Each file is indexed for semantic search and
+          optional AI answers that cite passages from that document only. File size limits apply on the server;
+          other users never see your uploads.
+        </p>
+      </div>
+      
+      <div className={styles.container}>
+        {/* LEFT SIDEBAR */}
+        <div className={styles.sidebar}>
+          <div className={styles.sidebarHeader}>
+            <h2 className={styles.sidebarTitle}>Library</h2>
+            <p className={styles.sidebarSubtitle}>Add PDFs here. Processing runs once per upload.</p>
+          </div>
 
         {/* UPLOAD SECTION */}
         <div className={styles.uploadBox}>
@@ -161,14 +180,14 @@ export default function RagDocuments() {
               onClick={() => fileInputRef.current?.click()}
               className={styles.chooseFileBtn}
             >
-              📁 Choose file
+              <FileText size={18} /> Choose file
             </button>
             <button
               onClick={handleUpload}
               disabled={!selectedFile || isUploading}
               className={styles.uploadBtn}
             >
-              {isUploading ? '⏳ Uploading...' : '⬆️ Upload'}
+              {isUploading ? '⏳ Uploading...' : <><Upload size={18} /> Upload</>}
             </button>
           </div>
 
@@ -211,7 +230,7 @@ export default function RagDocuments() {
               <div className={styles.docInfo}>
                 <p className={styles.docName}>{doc.file_name}</p>
                 <span className={`${styles.statusBadge} ${doc.status === 'ready' ? styles.statusReady : styles.statusProcessing}`}>
-                  {doc.status || 'processing'}
+                  {doc.status?.toUpperCase() || 'PROCESSING'}
                 </span>
               </div>
               <button
@@ -221,7 +240,7 @@ export default function RagDocuments() {
                 }}
                 className={styles.deleteBtn}
               >
-                🗑️
+                <Trash2 size={16} />
               </button>
             </div>
           ))}
@@ -236,104 +255,17 @@ export default function RagDocuments() {
               Choose a document from the library to open the reader, run semantic search over its text, and ask questions with AI-assisted answers grounded in that file.
             </p>
           </div>
+        ) : activeDocument.status === 'processing' ? (
+          <div className={styles.emptyState}>
+            <p>This document is not ready for preview or AI tools. Current status: <strong>processing</strong>.</p>
+          </div>
         ) : (
           <div className={styles.documentContainer}>
-            <h2 className={styles.documentTitle}>{activeDocument.file_name}</h2>
-
-            {/* TABS */}
-            <div className={styles.tabsContainer}>
-              <button 
-                onClick={() => setActiveTab('ask')}
-                className={`${styles.tabButton} ${activeTab === 'ask' ? styles.active : ''}`}
-              >
-                💬 Ask AI
-              </button>
-              <button 
-                onClick={() => setActiveTab('search')}
-                className={`${styles.tabButton} ${activeTab === 'search' ? styles.active : ''}`}
-              >
-                🔍 Search
-              </button>
-              <button 
-                onClick={() => {
-                  setActiveTab('preview');
-                  handlePreview();
-                }}
-                className={`${styles.tabButton} ${activeTab === 'preview' ? styles.active : ''}`}
-              >
-                📄 Preview
-              </button>
-            </div>
-
-            {/* ASK AI TAB */}
-            {activeTab === 'ask' && (
-              <div className={styles.tabContent}>
-                <h3 className={styles.tabTitle}>Ask AI</h3>
-                <div className={styles.queryContainer}>
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Ask a question about this document..."
-                    className={styles.queryInput}
-                  />
-                  <button
-                    onClick={handleAskAI}
-                    disabled={isQueryingAI}
-                    className={styles.actionBtn}
-                  >
-                    {isQueryingAI ? '⏳ Asking...' : 'Ask'}
-                  </button>
-                </div>
-                {aiAnswer && (
-                  <div className={styles.resultBox}>
-                    <h4 className={styles.resultTitle}>Answer:</h4>
-                    <p>{aiAnswer}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* SEARCH TAB */}
-            {activeTab === 'search' && (
-              <div className={styles.tabContent}>
-                <h3 className={styles.tabTitle}>Semantic Search</h3>
-                <div className={styles.queryContainer}>
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search in this document..."
-                    className={styles.queryInput}
-                  />
-                  <button
-                    onClick={handleSearch}
-                    disabled={isSearching}
-                    className={styles.actionBtn}
-                  >
-                    {isSearching ? '⏳ Searching...' : 'Search'}
-                  </button>
-                </div>
-                {searchResults.length > 0 && (
-                  <div>
-                    <p style={{ color: '#666' }}>{searchResults.length} results found:</p>
-                    {searchResults.map((result, idx) => (
-                      <div key={idx} className={styles.searchResult}>
-                        <p className={styles.resultText}>{result.excerpt}</p>
-                        <small className={styles.resultScore}>
-                          Similarity: {(result.score * 100).toFixed(1)}%
-                        </small>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* PREVIEW TAB */}
-            {activeTab === 'preview' && (
-              <div className={styles.previewContainer}>
-                <h3 className={styles.tabTitle}>PDF Preview</h3>
+            {/* READER SECTION */}
+            <div className={styles.sectionBlock}>
+              <h3 className={styles.sectionTitle}>Reader</h3>
+              <p className={styles.sectionSubtitle}>Inline preview of the selected PDF.</p>
+              <div className={styles.previewBox}>
                 {pdfUrl ? (
                   <iframe
                     src={pdfUrl}
@@ -341,13 +273,81 @@ export default function RagDocuments() {
                     title="PDF Preview"
                   />
                 ) : (
-                  <p>Loading PDF...</p>
+                  <p className={styles.loadingText}>Loading PDF...</p>
                 )}
               </div>
-            )}
+            </div>
+
+            <hr className={styles.divider} />
+
+            {/* SEARCH SECTION */}
+            <div className={styles.sectionBlock}>
+              <h3 className={styles.sectionTitle}>Semantic search</h3>
+              <p className={styles.sectionSubtitle}>Finds passages by meaning (embeddings), not only exact keywords.</p>
+              
+              <div className={styles.inputGroup}>
+                <label className={styles.inputLabel}>Search query</label>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Describe the topic or phrase you are looking for"
+                  className={styles.textInput}
+                />
+                <button
+                  onClick={handleSearch}
+                  disabled={isSearching}
+                  className={styles.actionBtn}
+                >
+                  {isSearching ? '⏳ Searching...' : <><Search size={16} /> Search</>}
+                </button>
+              </div>
+              
+              {searchResults.length > 0 && (
+                <div className={styles.resultsArea}>
+                  {searchResults.map((result, idx) => (
+                    <div key={idx} className={styles.searchResult}>
+                      <p className={styles.resultText}>{result.excerpt}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <hr className={styles.divider} />
+
+            {/* ASK AI SECTION */}
+            <div className={styles.sectionBlock}>
+              <h3 className={styles.sectionTitle}>Ask with AI</h3>
+              <p className={styles.sectionSubtitle}>Answers use only retrieved excerpts from this PDF, with citations where possible. When the document includes code, the reply may show it in formatted blocks you can copy.</p>
+              
+              <div className={styles.inputGroup}>
+                <label className={styles.inputLabel}>Question</label>
+                <textarea
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="What does this PDF recommend for route persistence?"
+                  className={styles.textArea}
+                />
+                <button
+                  onClick={handleAskAI}
+                  disabled={isQueryingAI}
+                  className={styles.actionBtn}
+                >
+                  {isQueryingAI ? '⏳ Asking...' : <><Sparkles size={16} /> Ask</>}
+                </button>
+              </div>
+
+              {aiAnswer && (
+                <div className={aiAnswer.startsWith('Error') ? styles.errorAnswerBox : styles.answerBox}>
+                  {aiAnswer}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

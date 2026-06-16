@@ -3,7 +3,12 @@ import { apiClient } from '../core/api.client';
 export const listDocuments = async () => {
   try {
     const response = await apiClient.get('/api/rag/documents');
-    return response.data.data || [];
+    const docs = response.data.data || [];
+    return docs.map(doc => ({
+      ...doc,
+      id: doc.document_id || doc.id,
+      file_name: doc.title || doc.file_name
+    }));
   } catch (error) {
     console.error('Error listing documents:', error);
     throw error;
