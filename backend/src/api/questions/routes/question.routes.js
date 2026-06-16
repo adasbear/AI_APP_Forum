@@ -28,12 +28,13 @@ const router = express.Router();
  * @query text - The input text to search for similar questions
  * @query limit - Optional limit on number of results (default: 5)
  */
-// router.get(
-//   "/search",
-//   authenticateUser,
-//   searchQuestionSemanticValidation,
-//   searchQuestionSemanticController,
-// );
+router.get(
+  "/search",
+  authenticateUser,
+  validateSearchQuestions,
+  searchQuestionsSemanticController
+);
+
 
 
 /**

@@ -33,7 +33,7 @@ export const generateQuestionEmbedding = async (text, options = {}) => {
       throw new Error("Embedding response did not contain values");
     }
 
-    return embedding;
+    return { embedding };
   } catch (error) {
     console.error("Error generating embedding:", error);
     throw new Error("Failed to generate question embedding");
@@ -149,7 +149,8 @@ export const findSimilarQuestionsByQuestionId = async (
  */
 export const findSimilarQuestionsByText = async (text, limit = 5) => {
   try {
-    const embedding = await generateQuestionEmbedding(text);
+    const embeddingResult = await generateQuestionEmbedding(text);
+    const embedding = embeddingResult.embedding;
 
     const sql = `
       SELECT 

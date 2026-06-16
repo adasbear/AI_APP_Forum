@@ -1,49 +1,17 @@
 import { apiClient } from './api.client';
 
-// Mock data matching T-10 response format
-const mockQuestions = [
-  {
-    id: 1,
-    questionHash: "abc123def456",
-    title: "How do I learn React?",
-    content: "I'm a beginner wanting to learn React from scratch.",
-    answerCount: 2,
-    createdAt: "2025-06-11T10:30:00Z",
-    updatedAt: "2025-06-11T10:30:00Z",
-    author: {
-      id: 1,
-      firstName: "John",
-      lastName: "Doe"
-    }
-  },
-  {
-    id: 2,
-    questionHash: "xyz789abc123",
-    title: "What is JavaScript?",
-    content: "I'm confused about JavaScript vs Java.",
-    answerCount: 3,
-    createdAt: "2025-06-10T15:20:00Z",
-    updatedAt: "2025-06-10T15:20:00Z",
-    author: {
-      id: 1,
-      firstName: "John",
-      lastName: "Doe"
-    }
-  }
-];
-
-export const getQuestions = async (filters = {}) => {
+export const getQuestions = async (filters = {}, userId = null) => {
   try {
-    // For now, return mock data
-    if (filters.mine) {
-      return mockQuestions;
+    const params = new URLSearchParams();
+    
+    // If filters.mine is true, add ?mine=true and user_id
+    if (filters.mine && userId) {
+      params.append('mine', 'true');
+      params.append('userId', userId);
     }
     
-    // In future: call real API when T-10 is ready
-    // const response = await apiClient.get(`/questions?${params.toString()}`);
-    // return response.data.data || [];
-    
-    return mockQuestions;
+    const response = await apiClient.get(`/api/questions?${params.toString()}`);
+    return response.data.data || [];
   } catch (error) {
     console.error('Error fetching questions:', error);
     throw error;
