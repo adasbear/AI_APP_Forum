@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, MessageSquare, FileText } from 'lucide-react';
+import { LayoutDashboard, LogOut, MessageSquare, FileText, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import styles from './Sidebar.module.css';
 
 /**
@@ -16,6 +17,17 @@ const NAV_ITEMS = [
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+
+  const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3777';
+  const getAvatarUrl = () => {
+    const avatar = user?.avatarUrl || user?.avatar_url;
+    if (avatar) {
+      if (avatar.startsWith('http')) return avatar;
+      return `${backendUrl}${avatar}`;
+    }
+    return `https://ui-avatars.com/api/?name=${user?.firstName || 'User'}+${user?.lastName || ''}&background=random`;
+  };
 
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
@@ -87,37 +99,55 @@ export default function Sidebar({ isOpen, onClose }) {
         </button>
 
         <div className={styles.sidebar__user}>
-          <div className={styles.sidebar__profile}>
+          <a href='/profile' className={styles.sidebar__profile}>
             <div className={styles.sidebar__avatar}>
               <img
-                src={
-                  (user?.avatarUrl || user?.avatar_url)
-                    ? `${import.meta.env.VITE_API_URL || 'http://localhost:3777'}${user?.avatarUrl || user?.avatar_url}`
-                    : `https://ui-avatars.com/api/?name=${
-                        user?.firstName || 'User'
-                      }+${user?.lastName || ''}&background=random`
-                }
-                alt={`${user?.firstName} ${user?.lastName}`}
+                src={getAvatarUrl()}
+                alt='avatar'
                 className={styles['sidebar__avatar-image']}
                 referrerPolicy='no-referrer'
               />
             </div>
             <div className={styles.sidebar__info}>
               <p className={styles.sidebar__name}>
-                {user?.firstName} {user?.lastName}
+                {user ? `${user.firstName} ${user.lastName}` : 'Guest'}
               </p>
               <p className={styles.sidebar__role}>Learner</p>
             </div>
-          </div>
+          </a>
 
-          <button
-            type='button'
-            onClick={logout}
-            className={styles.sidebar__logout}
-          >
-            <LogOut size={16} />
-            <span>Logout</span>
-          </button>
+          <div className={styles.sidebar__bottomActions}>
+            <button
+              type='button'
+              className={`${styles.themeToggle} ${theme === 'dark' ? styles.dark : styles.light}`}
+              onClick={toggleTheme}
+              aria-label='Toggle theme'
+              title='Toggle dark / light mode'
+            >
+              <div className={styles.themeToggleTrack}>
+                <div className={styles.themeToggleThumb}>
+                  {theme === 'light' ? (
+                    <Moon size={16} className={styles.themeIcon} />
+                  ) : (
+                    <Sun size={16} className={styles.themeIcon} />
+                  )}
+                </div>
+                <div className={styles.themeToggleBgIcons}>
+                  <Sun size={14} className={styles.sunIcon} />
+                  <Moon size={14} className={styles.moonIcon} />
+                </div>
+              </div>
+            </button>
+
+            <button
+              type='button'
+              onClick={logout}
+              className={styles.sidebar__logout}
+            >
+              <LogOut size={16} />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </div>
     </aside>

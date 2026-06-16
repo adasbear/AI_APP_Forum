@@ -255,19 +255,26 @@
     /* 3 * 0.25rem = 0.75rem */
     margin-bottom: 1rem;
     /* 4 * 0.25rem = 1rem */
+    text-decoration: none;
+}
+
+.sidebar__profile:hover .sidebar__avatar {
+    transform: scale(1.04);
+    border-color: var(--primary);
 }
 
 /* Element: sidebar__avatar */
 .sidebar__avatar {
-    width: 2rem;
-    /* 8 * 0.25rem = 2rem */
-    height: 2rem;
-    border-radius: 9999px;
-    /* rounded-full */
-    background-color: var(--surface-container-highest);
-    border: 1px solid var(--surface-container-highest);
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background-color: var(--surface-container-high);
     flex-shrink: 0;
     overflow: hidden;
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease;
 }
 
 /* Element: sidebar__avatar-image */
@@ -355,4 +362,173 @@
 .sidebar__logout:hover {
     color: rgb(239, 68, 68);
     /* text-red-500 */
+}
+
+/* ========================================
+   BOTTOM ACTIONS
+======================================== */
+.sidebar__bottomActions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 0.25rem;
+}
+
+.sidebar__bottomActions .sidebar__logout {
+    width: auto;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+/* ========================================
+   ENHANCED THEME TOGGLE
+======================================== */
+
+.themeToggle {
+  position: relative;
+  width: 58px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: transform 0.22s ease;
+}
+
+.themeToggle:hover {
+  transform: translateY(-1px);
+}
+
+.themeToggle:active {
+  transform: scale(0.96);
+}
+
+.themeToggleTrack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+/* LIGHT MODE */
+.light .themeToggleTrack {
+  background: linear-gradient(180deg, #ffffff, #f3f4f6);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.9),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* DARK MODE */
+.dark .themeToggleTrack {
+  background: linear-gradient(180deg, #111827, #1f2937);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.03),
+    0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+/* TOGGLE THUMB */
+.themeToggleThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition:
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+/* LIGHT THUMB */
+.light .themeToggleThumb {
+  background: linear-gradient(135deg, #ffffff, #f9fafb);
+  color: #f59e0b;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.12),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+}
+
+/* DARK THUMB */
+.dark .themeToggleThumb {
+  transform: translateX(26px);
+  background: linear-gradient(135deg, #374151, #111827);
+  color: #facc15;
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+/* ICONS */
+.themeIcon {
+  transition:
+    transform 0.35s ease,
+    opacity 0.25s ease;
+}
+
+.themeToggle:hover .themeIcon {
+  transform: rotate(12deg) scale(1.06);
+}
+
+/* BACKGROUND ICONS */
+.themeToggleBgIcons {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-inline: 7px;
+  pointer-events: none;
+}
+
+.sunIcon,
+.moonIcon {
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+/* LIGHT MODE ICONS */
+.light .sunIcon {
+  color: #f59e0b;
+  opacity: 0.95;
+  transform: scale(1);
+}
+
+.light .moonIcon {
+  color: #9ca3af;
+  opacity: 0.3;
+  transform: scale(0.9);
+}
+
+/* DARK MODE ICONS */
+.dark .moonIcon {
+  color: #e5e7eb;
+  opacity: 0.95;
+  transform: scale(1);
+}
+
+.dark .sunIcon {
+  color: #9ca3af;
+  opacity: 0.25;
+  transform: scale(0.9);
+}
+
+/* FOCUS */
+.themeToggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
 }
