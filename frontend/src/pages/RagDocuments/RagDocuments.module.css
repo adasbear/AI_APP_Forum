@@ -1,0 +1,325 @@
+/* MAIN LAYOUT */
+.container {
+  display: flex;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* LEFT SIDEBAR */
+.sidebar {
+  width: 350px;
+  border-right: 1px solid #ddd;
+  padding: 30px 20px;
+  overflow-y: auto;
+  background-color: #fff;
+}
+
+.sidebarTitle {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* UPLOAD SECTION */
+.uploadBox {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
+}
+
+.uploadText {
+  font-size: 12px;
+  color: #666;
+  margin: 0 0 15px 0;
+}
+
+.uploadButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.chooseFileBtn {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.chooseFileBtn:hover {
+  background-color: #f5f5f5;
+}
+
+.uploadBtn {
+  flex: 1;
+  padding: 10px 15px;
+  background-color: #ff9a56;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.uploadBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.uploadBtn:hover:not(:disabled) {
+  background-color: #ff8c42;
+}
+
+.fileSelected {
+  font-size: 12px;
+  color: #999;
+  margin: 10px 0 0 0;
+  text-align: center;
+}
+
+/* ERROR MESSAGE */
+.errorBox {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 13px;
+}
+
+/* DOCUMENT LIST */
+.docItem {
+  padding: 12px;
+  margin-bottom: 10px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.docItem:hover {
+  background-color: #f0f0f0;
+}
+
+.docItem.active {
+  background-color: #e3f2fd;
+}
+
+.docInfo {
+  flex: 1;
+}
+
+.docName {
+  margin: 0 0 5px 0;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.statusReady {
+  background-color: #c8e6c9;
+  color: #2e7d32;
+}
+
+.statusProcessing {
+  background-color: #fff9c4;
+  color: #f57f17;
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #999;
+  padding: 5px;
+}
+
+.deleteBtn:hover {
+  color: #c62828;
+}
+
+/* RIGHT COLUMN */
+.mainContent {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.emptyState {
+  text-align: center;
+  color: #999;
+  margin-top: 100px;
+  font-size: 16px;
+}
+
+.documentContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.documentTitle {
+  margin: 0 0 20px 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* TABS */
+.tabsContainer {
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 20px;
+  display: flex;
+}
+
+.tabButton {
+  padding: 10px 20px;
+  border: none;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.tabButton:hover {
+  background-color: #e8e8e8;
+}
+
+.tabButton.active {
+  background-color: #fff;
+  border-bottom: 3px solid #ff9a56;
+  font-weight: bold;
+  color: #ff9a56;
+}
+
+/* TAB CONTENT */
+.tabContent {
+  flex: 1;
+}
+
+.tabTitle {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* INPUT & QUERY */
+.queryContainer {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.queryInput {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.queryInput:focus {
+  outline: none;
+  border-color: #ff9a56;
+  box-shadow: 0 0 5px rgba(255, 154, 86, 0.3);
+}
+
+.actionBtn {
+  padding: 10px 20px;
+  background-color: #ff9a56;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.actionBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actionBtn:hover:not(:disabled) {
+  background-color: #ff8c42;
+}
+
+/* RESULTS */
+.resultBox {
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-radius: 4px;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.resultTitle {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.searchResult {
+  background-color: #f9f9f9;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  border-left: 3px solid #ff9a56;
+}
+
+.resultText {
+  margin: 0;
+}
+
+.resultScore {
+  color: #999;
+  font-size: 12px;
+}
+
+/* PDF PREVIEW */
+.previewContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdfIframe {
+  width: 100%;
+  height: calc(100% - 50px);
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+/* HIDDEN FILE INPUT */
+.hiddenInput {
+  display: none;
+}
+
+/* LOADING TEXT */
+.loadingText {
+  color: #999;
+  font-size: 14px;
+}
+
+.emptyMessage {
+  color: #999;
+  font-size: 14px;
+}

@@ -30,6 +30,7 @@ import PostQuestion from "./pages/PostQuestion/PostQuestion";
 import MyQuestions from "./pages/MyQuestions/MyQuestions";
 import Profile from "./pages/Profile/Profile";
 
+import RagDocuments from './pages/RagDocuments/RagDocuments';
 function App() {
   return (
     <BrowserRouter>
@@ -81,7 +82,7 @@ function App() {
               path="/rag-documents"
               element={
                 <ProtectedRoute>
-                  <h1>RAG Documents Page</h1>
+                  <RagDocuments />
                 </ProtectedRoute>
               }
             />

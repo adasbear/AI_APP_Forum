@@ -32,3 +32,4 @@ mainRouter.use("/rag/documents", ragRoutes);
  * Votes Routes
  */
 mainRouter.use("/votes", voteRoutes);
+mainRouter.use("/rag", ragRoutes);
