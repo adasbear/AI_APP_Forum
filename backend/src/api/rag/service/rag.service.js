@@ -5,8 +5,51 @@ import { safeExecute } from "../../../../db/config.js";
 import { chunkText } from "../../../utils/chunking.js";
 import { validateUploadedDocument } from "../validations/rag.validation.js";
 import { generateQuestionEmbedding } from "../../questions/service/vector.service.js";
+import {
+  NotFoundError,
+  ServiceUnavailableError,
+} from "../../../utils/errors/index.js";
+import { embedQuery, getGeminiClient } from "../../../utils/gemini.js";
+import { cosineSimilarity } from "../../../utils/math.js";
 
-export async function createDocumentFromUploadService({ file, userId }) {
+const K_CHUNKS = 5;
+
+/**
+ * Get Document Metadata Service
+ */
+export const getDocumentMetaService = async (documentId, userId) => {
+  const sql = `
+    SELECT
+      document_id,
+      title,
+      mime_type,
+      byte_size,
+      status,
+      error_message,
+      created_at,
+      updated_at,
+      user_id,
+      storage_path
+    FROM documents
+    WHERE document_id = ? AND user_id = ?
+  `;
+
+  const rows = await safeExecute(sql, [documentId, userId]);
+
+  if (rows.length === 0) {
+    throw new NotFoundError("Document not found");
+  }
+
+  return rows[0];
+};
+
+/**
+ * Upload & Process Document
+ */
+export async function createDocumentFromUploadService({
+  file,
+  userId,
+}) {
   validateUploadedDocument(file);
 
   if (!userId) {
@@ -16,9 +59,6 @@ export async function createDocumentFromUploadService({ file, userId }) {
   if (!file?.path) {
     throw new Error("File path is missing");
   }
-
-  console.log("USER ID:", userId);
-  console.log("FILE:", file);
 
   let documentId = null;
 
@@ -60,7 +100,7 @@ export async function createDocumentFromUploadService({ file, userId }) {
 
     const chunks = chunkText(extractedText, 1000, 150);
 
-    if (!chunks || chunks.length === 0) {
+    if (!chunks?.length) {
       throw new Error("Chunking failed: no text chunks created");
     }
 
@@ -73,7 +113,8 @@ export async function createDocumentFromUploadService({ file, userId }) {
         throw new Error("Embedding generation failed");
       }
 
-      const insertChunkSql = `
+      const chunkResult = await safeExecute(
+        `
         INSERT INTO document_chunks
         (
           document_id,
@@ -81,17 +122,14 @@ export async function createDocumentFromUploadService({ file, userId }) {
           content
         )
         VALUES (?, ?, ?)
-      `;
-
-      const chunkResult = await safeExecute(insertChunkSql, [
-        documentId,
-        index,
-        chunk,
-      ]);
+        `,
+        [documentId, index, chunk],
+      );
 
       const chunkId = chunkResult.insertId;
 
-      const insertVectorSql = `
+      await safeExecute(
+        `
         INSERT INTO document_chunk_vectors
         (
           chunk_id,
@@ -100,14 +138,14 @@ export async function createDocumentFromUploadService({ file, userId }) {
           status
         )
         VALUES (?, ?, ?, ?)
-      `;
-
-      await safeExecute(insertVectorSql, [
-        chunkId,
-        chunk,
-        JSON.stringify(embeddingResult.embedding),
-        "ready",
-      ]);
+        `,
+        [
+          chunkId,
+          chunk,
+          JSON.stringify(embeddingResult.embedding),
+          "ready",
+        ],
+      );
     }
 
     await safeExecute(
@@ -130,16 +168,12 @@ export async function createDocumentFromUploadService({ file, userId }) {
 
     return documents[0];
   } catch (error) {
-    console.error("===RAG DOCUMENT PROCESSING ERROR===");
-    console.error(error);
-    console.error("====================================");
-
     if (documentId) {
       await safeExecute(
         `
         UPDATE documents
         SET status = 'failed',
-        error_message = ?
+            error_message = ?
         WHERE document_id = ?
         `,
         [error.message, documentId],
@@ -150,98 +184,72 @@ export async function createDocumentFromUploadService({ file, userId }) {
   }
 }
 
-//document search service
-
-function cosineSimilarity(a, b) {
-  let dot = 0;
-  let magA = 0;
-  let magB = 0;
-
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    magA += a[i] * a[i];
-    magB += b[i] * b[i];
-  }
-
-  return dot / (Math.sqrt(magA) * Math.sqrt(magB));
-}
-
+/**
+ * Search Chunks Only
+ */
 export async function searchInDocumentService({
   documentId,
   query,
   k = 5,
   userId,
 }) {
-  // 1. Check document ownership + status
-  const doc = await safeExecute(
-    `SELECT * FROM documents WHERE document_id = ? AND user_id = ?`,
-    [documentId, userId],
+  const doc = await getDocumentMetaService(
+    documentId,
+    userId,
   );
 
-  if (!doc.length) {
-    throw new Error("Document not found or unauthorized");
-  }
-
-  if (doc[0].status !== "ready") {
+  if (doc.status !== "ready") {
     throw new Error("Document is not ready for search");
   }
 
-  // 2. Embed query
-  const queryEmbedding = await generateQuestionEmbedding(query, {
-    taskType: "RETRIEVAL_QUERY",
-  });
+  const queryEmbedding = await generateQuestionEmbedding(
+    query,
+    {
+      taskType: "RETRIEVAL_QUERY",
+    },
+  );
 
   const queryVector = queryEmbedding.embedding;
 
-  // 3. Get all chunk vectors
   const chunks = await safeExecute(
     `
-    SELECT 
+    SELECT
       c.chunk_id,
       c.chunk_index,
       c.content,
       v.embedding
     FROM document_chunks c
-    JOIN document_chunk_vectors v ON c.chunk_id = v.chunk_id
+    JOIN document_chunk_vectors v
+      ON c.chunk_id = v.chunk_id
     WHERE c.document_id = ?
     `,
     [documentId],
   );
 
-  // 4. Compute similarity
   const results = chunks
     .map((c) => {
-      let vector;
-
       try {
-        // Handle both JSON string and already-parsed array cases
-        vector =
+        const vector =
           typeof c.embedding === "string"
             ? JSON.parse(c.embedding)
             : c.embedding;
 
-        // Validate that vector is actually an array of numbers
-        if (!Array.isArray(vector) || vector.length === 0) {
-          throw new Error("Invalid vector format");
+        if (!Array.isArray(vector)) {
+          return null;
         }
-      } catch (err) {
-        console.error("Skipping corrupted embedding:", c.embedding);
-        console.error("Parse error:", err.message);
+
+        return {
+          chunkId: c.chunk_id,
+          chunkIndex: c.chunk_index,
+          score: cosineSimilarity(queryVector, vector),
+          excerpt: c.content,
+        };
+      } catch {
         return null;
       }
-
-      const score = cosineSimilarity(queryVector, vector);
-
-      return {
-        chunkId: c.chunk_id,
-        chunkIndex: c.chunk_index,
-        score,
-        excerpt: c.content,
-      };
     })
     .filter(Boolean);
 
-  // 5. Filter + sort
   const ranked = results
     .filter((r) => r.score > 0.2)
     .sort((a, b) => b.score - a.score)
@@ -252,3 +260,128 @@ export async function searchInDocumentService({
     results: ranked,
   };
 }
+
+/**
+ * Generate Answer From Retrieved Chunks
+ */
+const answerFromRagChunksService = async (
+  query,
+  contextText,
+) => {
+  try {
+    const ai = getGeminiClient();
+
+    const prompt = `
+You are a helpful AI assistant.
+
+You must answer the user's question ONLY using the provided document context.
+
+If the answer cannot be found in the context, say:
+"I cannot answer this based on the provided document."
+
+Context:
+${contextText}
+
+Question:
+${query}
+
+Answer:
+`;
+
+    const response =
+      await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
+
+    return response.text;
+  } catch {
+    throw new ServiceUnavailableError(
+      "Failed to generate answer from AI",
+    );
+  }
+};
+
+/**
+ * Full RAG Query Service
+ */
+export const queryDocumentService = async (
+  documentId,
+  userId,
+  query,
+) => {
+  await getDocumentMetaService(
+    documentId,
+    userId,
+  );
+
+  const queryEmbedding = await embedQuery(query);
+
+  const chunkRows = await safeExecute(
+    `
+    SELECT
+      c.chunk_id,
+      c.chunk_index,
+      c.content,
+      v.embedding
+    FROM document_chunks c
+    JOIN document_chunk_vectors v
+      ON c.chunk_id = v.chunk_id
+    WHERE c.document_id = ?
+      AND v.status = 'ready'
+    `,
+    [documentId],
+  );
+
+  if (chunkRows.length === 0) {
+    return {
+      answer:
+        "No processed text chunks found for this document.",
+      citations: [],
+      chunksUsed: [],
+    };
+  }
+
+  const scoredChunks = chunkRows.map((row) => {
+    const embedding =
+      typeof row.embedding === "string"
+        ? JSON.parse(row.embedding)
+        : row.embedding;
+
+    return {
+      ...row,
+      score: cosineSimilarity(
+        queryEmbedding,
+        embedding,
+      ),
+    };
+  });
+
+  const topChunks = scoredChunks
+    .sort((a, b) => b.score - a.score)
+    .slice(0, K_CHUNKS);
+
+  const contextText = topChunks
+    .map(
+      (chunk) =>
+        `[Chunk ${chunk.chunk_index}]\n${chunk.content}`,
+    )
+    .join("\n\n");
+
+  const answer =
+    await answerFromRagChunksService(
+      query,
+      contextText,
+    );
+
+  return {
+    answer,
+    citations: topChunks.map((chunk, index) => ({
+      ref: index + 1,
+      chunkIndex: chunk.chunk_index,
+    })),
+    chunksUsed: topChunks.map(
+      (chunk) => chunk.chunk_index,
+    ),
+  };
+};
