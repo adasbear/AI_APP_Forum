@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import { PDFParse } from "pdf-parse";
 
 import { safeExecute } from "../../../../db/config.js";
@@ -7,6 +8,7 @@ import { validateUploadedDocument } from "../validations/rag.validation.js";
 import { generateQuestionEmbedding } from "../../questions/service/vector.service.js";
 import {
   NotFoundError,
+  ForbiddenError,
   ServiceUnavailableError,
 } from "../../../utils/errors/index.js";
 import { embedQuery, getGeminiClient } from "../../../utils/gemini.js";
@@ -95,6 +97,38 @@ export const getDocumentMetaService = async (documentId, userId) => {
  */
 export const assertOwnedDocument = async (documentId, userId) => {
   return await getDocumentMetaService(documentId, userId);
+};
+
+/**
+ * Delete Document Service
+ */
+export const deleteDocumentService = async (documentId, userId) => {
+  // Ownership check via existing service — throws NotFoundError or ForbiddenError
+  const document = await getDocumentMetaService(documentId, userId);
+
+  // Delete PDF from disk; ignore missing file errors
+  try {
+    const absolutePath = path.resolve(document.storage_path);
+    fs.unlinkSync(absolutePath);
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      throw err;
+    }
+  }
+
+  // Delete document record.
+  // CASCADE will automatically delete:
+  //   document_chunks
+  //   document_chunk_vectors
+  await safeExecute(
+    `
+    DELETE FROM documents
+    WHERE document_id = ?
+    `,
+    [documentId],
+  );
+
+  return { id: documentId };
 };
 
 /**

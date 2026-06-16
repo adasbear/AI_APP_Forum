@@ -1,8 +1,6 @@
 import express from "express";
-
 import { authenticateUser } from "../../../middleware/authentication.js";
 import { uploadDocument } from "../../../middleware/rag.upload.config.js";
-
 import {
   listDocumentsController,
   getDocumentMetaController,
@@ -10,8 +8,8 @@ import {
   createDocumentController,
   queryDocumentController,
   searchInDocumentController,
+  deleteDocumentController,
 } from "../controller/rag.controller.js";
-
 import {
   documentIdParamValidation,
   queryDocumentValidation,
@@ -76,6 +74,16 @@ router.get(
   authenticateUser,
   documentIdParamValidation,
   searchInDocumentController,
+);
+
+/**
+ * DELETE /api/rag/documents/:documentId
+ */
+router.delete(
+  "/:documentId",
+  authenticateUser,
+  documentIdParamValidation,
+  deleteDocumentController,
 );
 
 export default router;
