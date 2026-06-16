@@ -36,8 +36,8 @@ export const getQuestionsValidation = [
 
   query("mine")
     .optional()
-    .isBoolean({ strict: true })
-    .withMessage("Mine must be a boolean"),
+    .isIn(["true", "false"])
+    .withMessage("Mine must be a boolean (true/false)"),
 
   validationErrorHandler,
 ];

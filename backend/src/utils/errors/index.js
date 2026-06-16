@@ -20,6 +20,13 @@ export class NotFoundError extends CustomAPIError {
   }
 }
 
+export class ForbiddenError extends CustomAPIError {
+  constructor(message) {
+    super(message);
+    this.statusCode = StatusCodes.FORBIDDEN; // 403
+  }
+}
+
 export class UnauthenticatedError extends CustomAPIError {
   constructor(message) {
     super(message);

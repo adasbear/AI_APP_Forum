@@ -19,8 +19,8 @@ export default function MyQuestions() {
       const questions = await getQuestions({ mine: true }, user.id);
       setMyQuestions(questions);
     } catch (err) {
-      setError(err.message || "Failed to load questions");
-      console.error("Error:", err);
+      const msg = err.response?.data?.msg || err.response?.data?.message || err.message;
+      setError(msg || "Failed to load questions");
     } finally {
       setIsLoading(false);
     }
