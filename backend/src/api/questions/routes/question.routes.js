@@ -25,6 +25,7 @@ import {
 
 import { authenticateUser } from "../../../middleware/authentication.js";
 import { validationErrorHandler } from "../../../middleware/validation-handler.js";
+import { aiLimiter } from "../../../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -36,6 +37,7 @@ const router = express.Router();
 router.post(
   '/draft-coach',
   authenticateUser,
+  aiLimiter,
   generateQuestionDraftCoachValidation,
   generateQuestionDraftCoachController,
 );
@@ -62,6 +64,7 @@ router.get(
 router.post(
   "/:questionHash/answer-fit",
   authenticateUser,
+  aiLimiter,
   evaluateAnswerFit,
 );
 

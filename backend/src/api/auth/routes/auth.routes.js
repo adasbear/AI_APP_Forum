@@ -1,3 +1,4 @@
+import { authLimiter } from '../../../middleware/rateLimiter.js';
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
@@ -55,7 +56,7 @@ router.post('/register', registerValidation, registerController);
  * @desc Authenticate user and get token
  * @access Public
  */
-router.post('/login', loginValidation, loginController);
+router.post('/login', authLimiter, loginValidation, loginController);
 
 /**
  * @route GET /api/auth/profile

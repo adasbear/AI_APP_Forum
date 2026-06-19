@@ -14,6 +14,7 @@ import {
   documentIdParamValidation,
   queryDocumentValidation,
 } from "../validations/rag.validation.js";
+import { aiLimiter } from "../../../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -62,6 +63,7 @@ router.get(
 router.post(
   "/:documentId/query",
   authenticateUser,
+  aiLimiter,
   queryDocumentValidation,
   queryDocumentController,
 );
