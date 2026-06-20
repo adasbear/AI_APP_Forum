@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { questionService } from '../../services/questions/question.service.js';
 import { timeAgo } from '../../lib/utils.js';
+import Button from '../../components/Button/Button';
 import styles from './Dashboard.module.css';
 import ui from '../../styles/pageStates.module.css';
 import {
@@ -217,9 +218,16 @@ export default function Dashboard() {
               </button>
             )}
           </div>
-          <button type="submit" className={styles.searchButton}>
+          <Button
+            type="submit"
+            variant={searchMode === 'semantic' ? 'ai' : 'primary'}
+            size='medium'
+            isLoading={isLoading && !isFetchingMore}
+            loadingText='Searching...'
+            icon={searchMode === 'semantic' ? <Sparkles size={16} /> : <Search size={16} />}
+          >
             Search
-          </button>
+          </Button>
         </form>
 
         {/* Search Mode Toggles */}

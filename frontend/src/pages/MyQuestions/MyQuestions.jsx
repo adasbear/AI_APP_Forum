@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { getQuestions } from "../../services/core/question.service";
+import ReactMarkdown from "react-markdown";
+import styles from "./MyQuestions.module.css";
 
 export default function MyQuestions() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [myQuestions, setMyQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,66 +35,69 @@ export default function MyQuestions() {
     }
   };
 
+  const handleQuestionClick = (questionHash) => {
+    navigate(`/questions/${questionHash}`);
+  };
+
+  const truncateContent = (content, maxLength = 300) => {
+    if (content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + "...";
+  };
+
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>My Questions</h1>
+    <div className={styles.pageContainer}>
+      <h1 className={styles.title}>My Questions</h1>
 
-      {isLoading && <p>Loading your questions...</p>}
+      {isLoading && <p className={styles.loadingText}>Loading your questions...</p>}
 
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+      {error && <p className={styles.errorText}>Error: {error}</p>}
 
       {!isLoading && myQuestions.length === 0 && (
-        <p>You haven't asked any questions yet.</p>
+        <p className={styles.emptyText}>You haven't asked any questions yet.</p>
       )}
 
       {!isLoading && myQuestions.length > 0 && (
         <div>
-          <p>
+          <p className={styles.countText}>
             <strong>Found {myQuestions.length} question(s):</strong>
           </p>
 
-          <div style={{ display: "grid", gap: "15px", marginTop: "20px" }}>
+          <div className={styles.questionsGrid}>
             {myQuestions.map((q) => (
               <div
                 key={q.id}
-                style={{
-                  border: "1px solid var(--border)",
-                  padding: "var(--spacing-md)",
-                  borderRadius: "var(--radius-md)",
-                  backgroundColor: "var(--surface)",
-                  transition:
-                    "background-color var(--transition-fast), border-color var(--transition-fast)",
+                className={styles.questionCard}
+                onClick={() => handleQuestionClick(q.questionHash || q.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleQuestionClick(q.questionHash || q.id);
+                  }
                 }}
               >
-                <h3
-                  style={{
-                    margin: "0 0 var(--spacing-sm) 0",
-                    color: "var(--text-primary)",
-                  }}
-                >
+                <h3 className={styles.questionTitle}>
                   {q.title}
                 </h3>
 
-                <p
-                  style={{
-                    margin: "0 0 var(--spacing-sm) 0",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  {q.content}
-                </p>
+                <div className={styles.questionContent}>
+                  <ReactMarkdown>
+                    {truncateContent(q.content)}
+                  </ReactMarkdown>
+                </div>
 
-                <small style={{ color: "var(--text-tertiary)" }}>
-                  {q.answerCount} answer(s) • By{" "}
-                  <span
-                    style={{
-                      color: "var(--primary)",
-                      fontWeight: "var(--font-medium)",
-                    }}
-                  >
-                    {q.author.firstName} {q.author.lastName}
+                <div className={styles.questionMeta}>
+                  <span className={styles.answerCount}>
+                    {q.answerCount} answer(s)
                   </span>
-                </small>
+                  <span className={styles.divider}>•</span>
+                  <span className={styles.authorInfo}>
+                    By{" "}
+                    <span className={styles.authorName}>
+                      {q.author.firstName} {q.author.lastName}
+                    </span>
+                  </span>
+                </div>
               </div>
             ))}
           </div>

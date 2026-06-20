@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { Bold, Italic, Code, Link2, MessageSquare, ThumbsUp, Trash2, Edit2, Bookmark } from 'lucide-react';
+import { Bold, Italic, Code, Link2, MessageSquare, ThumbsUp, Trash2, Edit2, Bookmark, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { questionService } from '../../services/questions/question.service.js';
 import { answerService } from '../../services/answers/answer.service.js';
 import { voteService } from '../../services/votes/vote.service.js';
 import { timeAgo, isAuthoredByUser } from '../../lib/utils.js';
+import Button from '../../components/Button/Button';
 import ui from '../../styles/pageStates.module.css';
 import styles from './QuestionDetail.module.css';
 
@@ -611,42 +612,33 @@ export default function QuestionDetail() {
 
                 <div className={styles.editorFooterControls}>
                   <div className={styles.validationBadgeGroup}>
-                    <button
-                      type='button'
-                      className={styles.btnValidationCheck}
+                    <Button
+                      variant='secondary'
+                      size='medium'
+                      isLoading={isCheckingFit}
+                      loadingText='Checking...'
+                      disabled={isPosting || answerText.trim().length < 20}
                       onClick={handleCheckFit}
-                      disabled={
-                        isCheckingFit ||
-                        isPosting ||
-                        answerText.trim().length < 20
-                      }
+                      icon={<CheckCircle size={14} />}
                     >
-                      <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
-                        <path d='M22 11.08V12a10 10 0 1 1-5.93-9.14' />
-                        <polyline points='22 4 12 14.01 9 11.01' />
-                      </svg>
-                      {isCheckingFit
-                        ? 'Checking...'
-                        : 'Check draft fit'}
-                    </button>
+                      Check draft fit
+                    </Button>
                     <span className={styles.validationTip}>
                       Relevance only. Not grading correctness. You need at least
                       20 characters.
                     </span>
                   </div>
 
-                  <button
-                    type='button'
-                    className={`${styles.btnSubmitPost} ${isPosting ? styles.btnSubmitting : ''}`}
+                  <Button
+                    variant='primary'
+                    size='medium'
+                    isLoading={isPosting}
+                    loadingText='Posting...'
+                    disabled={isCheckingFit || answerText.trim().length < 20}
                     onClick={handlePostAnswer}
-                    disabled={
-                      isPosting ||
-                      isCheckingFit ||
-                      answerText.trim().length < 20
-                    }
                   >
-                    {isPosting ? 'Posting...' : 'Post Your Answer'}
-                  </button>
+                    Post Your Answer
+                  </Button>
                 </div>
               </div>
 

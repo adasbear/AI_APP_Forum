@@ -29,9 +29,15 @@ Evaluate the draft on:
 Respond in valid JSON with this exact structure:
 {
   "feedback": "A paragraph of overall feedback on how to improve the question.",
-  "improvedDraft": "A rewritten, improved version of the user's content. Do NOT answer the question. Only improve the clarity and markdown formatting of the question itself.",
+  "improvedTitle": "A rewritten, improved version of the question title. Make it clear, specific, and searchable. Keep it under 100 characters.",
+  "improvedContent": "A rewritten, improved version of the question content with proper markdown formatting. Include clear sections, code blocks if applicable, and better structure. Do NOT answer the question, only improve how it's asked.",
   "tips": ["Tip 1", "Tip 2", "Tip 3"]
-}`;
+}
+
+IMPORTANT: 
+- improvedTitle should ONLY contain the improved title text (no "Title:" prefix)
+- improvedContent should ONLY contain the improved content/details (no "Content:" prefix)
+- Both should be ready to use directly in the form fields`;
 };
 
 export const generateQuestionDraftCoachService = async (title, content) => {
@@ -41,7 +47,7 @@ export const generateQuestionDraftCoachService = async (title, content) => {
   try {
     response = await ai.models.generateContent({
       model: GEMINI_TEXT_MODEL,
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents: prompt,
     });
   } catch (error) {
     throw new ServiceUnavailableError(
@@ -49,7 +55,7 @@ export const generateQuestionDraftCoachService = async (title, content) => {
     );
   }
 
-  const text = response?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const text = response?.text;
 
   if (!text) {
     throw new ServiceUnavailableError(
@@ -71,7 +77,8 @@ export const generateQuestionDraftCoachService = async (title, content) => {
 
   return {
     feedback: parsed.feedback || 'No feedback provided.',
-    improvedDraft: parsed.improvedDraft || content,
+    improvedTitle: parsed.improvedTitle || title || '',
+    improvedContent: parsed.improvedContent || content,
     tips: Array.isArray(parsed.tips) ? parsed.tips : [],
   };
 };

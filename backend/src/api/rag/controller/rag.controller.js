@@ -77,12 +77,7 @@ export const getDocumentFileController = async (req, res, next) => {
     // storage_path is relative path like "uploads/rag/1234567890-file.pdf"
     const absoluteFilePath = path.resolve(process.cwd(), document.storage_path);
     
-    console.log('Attempting to serve PDF:', {
-      documentId,
-      storage_path: document.storage_path,
-      absolute_path: absoluteFilePath,
-      exists: fs.existsSync(absoluteFilePath)
-    });
+  
     
     if (!fs.existsSync(absoluteFilePath)) {
       return res.status(StatusCodes.NOT_FOUND).json({

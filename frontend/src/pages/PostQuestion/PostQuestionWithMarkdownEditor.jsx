@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { questionService } from '../../services/questions/question.service.js';
 import { MarkdownEditor } from '../../components/MarkdownEditor';
+import Button from '../../components/Button/Button';
 import ReactMarkdown from 'react-markdown';
 import styles from './PostQuestion.module.css';
 import { Sparkles, Send, Check } from 'lucide-react';
@@ -259,50 +260,121 @@ export default function PostQuestionWithMarkdownEditor() {
 
           {/* AI Coach Section */}
           <div className={styles.aiSection}>
-            <button
-              type="button"
-              className={styles.aiBtn}
+            <Button
+              variant='ai'
+              size='medium'
+              isLoading={isCoaching}
+              loadingText='Getting suggestions...'
+              disabled={isSubmitting}
               onClick={handleCoachDraft}
-              disabled={isCoaching || isSubmitting}
+              icon={<Sparkles size={16} />}
             >
-              <Sparkles size={16} />
-              {isCoaching ? 'Getting suggestions...' : 'AI suggestions'}
-            </button>
+              AI suggestions
+            </Button>
             <span className={styles.aiDisclaimer}>Suggestions only. You still choose what to post.</span>
           </div>
 
-          {/* AI Feedback Panel */}
           {coachFeedback && (
             <div className={styles.aiFeedbackPanel}>
-              <div className={styles.aiFeedbackTitle}>
-                <Sparkles size={16} /> AI Draft Coach Feedback
+              <div className={styles.aiHeader}>
+                <div className={styles.aiHeaderLeft}>
+                  <Sparkles size={20} className={styles.aiIcon} />
+                  <h3 className={styles.aiHeaderTitle}>AI Suggestions</h3>
+                </div>
+                <button
+                  type="button"
+                  className={styles.closeBtn}
+                  onClick={() => setCoachFeedback(null)}
+                  aria-label="Close suggestions"
+                >
+                  ×
+                </button>
               </div>
-              <div className={styles.aiFeedbackContent}>
-                <ReactMarkdown>{coachFeedback.feedback || ''}</ReactMarkdown>
-              </div>
-              {coachFeedback.tips && coachFeedback.tips.length > 0 && (
-                <ul className={styles.aiFeedbackList}>
-                  {coachFeedback.tips.map((tip, idx) => <li key={idx}>{tip}</li>)}
-                </ul>
-              )}
-              {coachFeedback.improvedDraft && (
-                <div className={styles.aiImprovedDraftContainer}>
-                  <h4 className={styles.aiImprovedDraftTitle}>Suggested Draft</h4>
-                  <div className={styles.aiImprovedDraft}>
-                    <ReactMarkdown>{coachFeedback.improvedDraft}</ReactMarkdown>
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.replaceDraftBtn}
-                    onClick={() => {
-                      setFormData(prev => ({ ...prev, content: coachFeedback.improvedDraft }));
-                      setCoachFeedback(null);
-                    }}
-                  >
-                    Replace my draft
-                  </button>
+
+              {/* Feedback Summary */}
+              {coachFeedback.feedback && (
+                <div className={styles.feedbackSummary}>
+                  <ReactMarkdown>{coachFeedback.feedback}</ReactMarkdown>
                 </div>
               )}
+
+              {/* Suggestions Container */}
+              <div className={styles.suggestionsContainer}>
+                {/* Title Suggestion */}
+                {coachFeedback.improvedTitle && (
+                  <div className={styles.suggestionBlock}>
+                    <div className={styles.suggestionLabel}>
+                      <span className={styles.labelText}>Improved Title</span>
+                    </div>
+                    <div className={styles.suggestionBox}>
+                      <p className={styles.suggestionText}>{coachFeedback.improvedTitle}</p>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.applyBtn}
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, title: coachFeedback.improvedTitle }));
+                      }}
+                    >
+                      Apply Title
+                    </button>
+                  </div>
+                )}
+
+                {/* Content Suggestion */}
+                {coachFeedback.improvedContent && (
+                  <div className={styles.suggestionBlock}>
+                    <div className={styles.suggestionLabel}>
+                      <span className={styles.labelText}>Improved Content</span>
+                    </div>
+                    <div className={styles.suggestionBox}>
+                      <ReactMarkdown className={styles.suggestionMarkdown}>
+                        {coachFeedback.improvedContent}
+                      </ReactMarkdown>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.applyBtn}
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, content: coachFeedback.improvedContent }));
+                      }}
+                    >
+                      Apply Content
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Tips Section */}
+              {coachFeedback.tips && coachFeedback.tips.length > 0 && (
+                <div className={styles.tipsSection}>
+                  <div className={styles.tipsLabel}>💡 Tips</div>
+                  <ul className={styles.tipsList}>
+                    {coachFeedback.tips.map((tip, idx) => (
+                      <li key={idx} className={styles.tipItem}>
+                        <ReactMarkdown>{tip}</ReactMarkdown>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Bottom Actions */}
+              <div className={styles.aiActions}>
+                <button
+                  type="button"
+                  className={styles.applyAllBtn}
+                  onClick={() => {
+                    setFormData(prev => ({
+                      title: coachFeedback.improvedTitle || prev.title,
+                      content: coachFeedback.improvedContent || prev.content,
+                    }));
+                    setCoachFeedback(null);
+                  }}
+                >
+                  Apply All & Close
+                </button>
+              </div>
             </div>
           )}
 
@@ -316,14 +388,17 @@ export default function PostQuestionWithMarkdownEditor() {
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
-              className={styles.submitBtn} 
-              disabled={isSubmitting || contentCharCount < 10}
+            <Button
+              type='submit'
+              variant='primary'
+              size='medium'
+              isLoading={isSubmitting}
+              loadingText='Posting...'
+              disabled={contentCharCount < 10}
+              icon={!isSubmitting && <Send size={16} />}
             >
-              {isSubmitting ? 'Posting...' : 'Post Question'}
-              {!isSubmitting && <Send size={16} />}
-            </button>
+              Post Question
+            </Button>
           </div>
         </form>
       </div>

@@ -9,6 +9,7 @@ import {
   fetchPdfObjectUrl
 } from '../../services/rag/rag.service';
 import { Upload, FileText, Sparkles, Search, Trash2 } from 'lucide-react';
+import Button from '../../components/Button/Button';
 import RagAnswerBody from '../../components/RagAnswerBody/RagAnswerBody';
 
 export default function RagDocuments() {
@@ -190,13 +191,17 @@ export default function RagDocuments() {
             >
               <FileText size={18} /> Choose file
             </button>
-            <button
+            <Button
+              variant='primary'
+              size='medium'
+              isLoading={isUploading}
+              loadingText='Uploading...'
+              disabled={!selectedFile}
               onClick={handleUpload}
-              disabled={!selectedFile || isUploading}
-              className={styles.uploadBtn}
+              icon={<Upload size={18} />}
             >
-              {isUploading ? '⏳ Uploading...' : <><Upload size={18} /> Upload</>}
-            </button>
+              Upload
+            </Button>
           </div>
 
           <p className={styles.fileSelected}>
@@ -343,13 +348,16 @@ export default function RagDocuments() {
                   placeholder="What does this PDF recommend for route persistence?"
                   className={styles.textArea}
                 />
-                <button
+                <Button
+                  variant='ai'
+                  size='medium'
+                  isLoading={isQueryingAI}
+                  loadingText='Asking...'
                   onClick={handleAskAI}
-                  disabled={isQueryingAI}
-                  className={styles.actionBtn}
+                  icon={<Sparkles size={16} />}
                 >
-                  {isQueryingAI ? '⏳ Asking...' : <><Sparkles size={16} /> Ask</>}
-                </button>
+                  Ask
+                </Button>
               </div>
 
               {aiAnswer && (

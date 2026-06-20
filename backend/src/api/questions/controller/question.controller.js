@@ -144,7 +144,8 @@ export const generateQuestionDraftCoachController = async (req, res, next) => {
       success: true,
       feedback: result.feedback,
       tips: result.tips,
-      improvedDraft: result.improvedDraft,
+      improvedTitle: result.improvedTitle,
+      improvedContent: result.improvedContent,
     });
   } catch (error) {
     next(error);
