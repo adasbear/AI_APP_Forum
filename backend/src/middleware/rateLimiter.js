@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
 // Auth endpoint limiter: 5 attempts per 15 minutes per IP
 export const authLimiter = rateLimit({
@@ -16,8 +16,8 @@ export const aiLimiter = rateLimit({
   max: 20, // 20 requests per minute
   message: "Too many AI requests, please try again later.",
   keyGenerator: (req) => {
-    // Use user ID if authenticated, otherwise use IP
-    return req.user?.id ? `user-${req.user.id}` : req.ip;
+    // Use user ID if authenticated, otherwise use IP with proper IPv6 handling
+    return req.user?.id ? `user-${req.user.id}` : ipKeyGenerator(req);
   },
   standardHeaders: true,
   legacyHeaders: false,
