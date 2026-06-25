@@ -134,7 +134,7 @@ export default function Profile() {
 
   if (!profile) return null;
 
-  const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3777";
+  const backendUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3777";
   const displayAvatar = profile.avatarUrl
     ? `${backendUrl}${profile.avatarUrl}`
     : `https://ui-avatars.com/api/?name=${profile.firstName}+${profile.lastName}&background=random&size=150`;

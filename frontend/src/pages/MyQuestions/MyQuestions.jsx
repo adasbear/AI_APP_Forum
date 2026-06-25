@@ -11,7 +11,7 @@ export default function MyQuestions() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3777";
+  const backendUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3777";
 
   // ✅ FIXED FETCH (no ESLint warning)
   const fetchData = useCallback(async () => {

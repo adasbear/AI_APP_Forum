@@ -20,7 +20,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3777';
+  const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3777';
   const getAvatarUrl = () => {
     const avatar = user?.avatarUrl || user?.avatar_url;
     if (avatar) {
