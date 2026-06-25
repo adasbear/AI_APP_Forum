@@ -22,6 +22,7 @@ import { answerService } from "../../services/answers/answer.service.js";
 import { voteService } from "../../services/votes/vote.service.js";
 import { timeAgo, isAuthoredByUser } from "../../lib/utils.js";
 import Button from "../../components/Button/Button";
+import UserAvatar from "../../components/UserAvatar/UserAvatar";
 import ui from "../../styles/pageStates.module.css";
 import styles from "./QuestionDetail.module.css";
 
@@ -474,15 +475,11 @@ export default function QuestionDetail() {
           <article className={styles.card}>
             <div className={styles.authorMeta}>
               <div className={styles.authorInfoLeft}>
-                <div
+                <UserAvatar
+                  author={question.author}
+                  size={40}
                   className={styles.avatar}
-                  style={{ background: getAvatarColor(questionAuthorName) }}
-                >
-                  {getInitials(
-                    question.author?.firstName,
-                    question.author?.lastName,
-                  )}
-                </div>
+                />
                 <div className={styles.authorDetails}>
                   <div className={styles.authorName}>{questionAuthorName}</div>
                   <div className={styles.authorDate}>
@@ -643,15 +640,11 @@ export default function QuestionDetail() {
               return (
                 <article key={answer.id} className={styles.answerCard}>
                   <div className={styles.authorMeta}>
-                    <div
+                    <UserAvatar
+                      author={answer.author}
+                      size={40}
                       className={styles.avatar}
-                      style={{ background: getAvatarColor(answerAuthorName) }}
-                    >
-                      {getInitials(
-                        answer.author?.firstName,
-                        answer.author?.lastName,
-                      )}
-                    </div>
+                    />
                     <div className={styles.authorDetails}>
                       <div className={styles.authorName}>
                         {answerAuthorName}
