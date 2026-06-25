@@ -465,3 +465,193 @@
   font-size: 14px;
   text-align: center;
 }
+
+/* =============================================
+   TOAST NOTIFICATION
+   ============================================= */
+.toastWrapper {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.08),
+    0 12px 24px -4px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
+  border-left: 4px solid var(--primary);
+  min-width: 340px;
+  max-width: 420px;
+  backdrop-filter: blur(12px);
+}
+
+.toast.error {
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(239, 68, 68, 0.04) 100%);
+}
+
+.toast.success {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(16, 185, 129, 0.04) 100%);
+}
+
+.toastIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.toastIcon.error {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.toastIcon.success {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.toastContent {
+  flex: 1;
+}
+
+.toastTitle {
+  margin: 0 0 2px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.toastMessage {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.toastCloseBtn {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.toastCloseBtn:hover {
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+/* =============================================
+   CONFIRMATION MODAL
+   ============================================= */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.confirmModal {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 32px;
+  width: 400px;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow:
+    0 20px 60px -12px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.confirmIconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.confirmTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+
+.confirmMessage {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 28px 0;
+  line-height: 1.5;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.confirmCancelBtn {
+  flex: 1;
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.confirmCancelBtn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+}
+
+.confirmDeleteBtn {
+  flex: 1;
+  padding: 10px 20px;
+  border: none;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.confirmDeleteBtn:hover {
+  background: #dc2626;
+}
