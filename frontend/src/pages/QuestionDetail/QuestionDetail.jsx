@@ -891,7 +891,7 @@ export default function QuestionDetail() {
                 <div className={styles.fitPanel}>
                   <div className={styles.fitHeader}>
                     <span className={`${styles.fitBadge} ${fitLevelClass}`}>
-                      Fit Score: {fitResult.fit_score}/100
+                      Fit Score: {fitResult.fit_score}/10
                     </span>
                   </div>
                   <p className={styles.fitNote}>{fitResult.feedback}</p>

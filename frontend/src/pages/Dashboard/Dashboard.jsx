@@ -31,7 +31,7 @@ export default function Dashboard() {
 
   // Search values come from the URL (set by the Navbar)
   const searchQuery = searchParams.get('q') || '';
-  const searchMode  = searchParams.get('mode') || 'keyword';
+  const searchMode = searchParams.get('mode') || 'keyword';
 
   const [questions, setQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -253,7 +253,7 @@ export default function Dashboard() {
         {!isLoading && !error && questions.length > 0 && (
           <>
             <p className={styles.statsNote}>
-              Figures below describe the newest threads in this feed (up to 100 from the API).
+              Figures below describe the newest threads in this feed (up to 20 from the API).
             </p>
             <div className={styles.statsRow}>
               <div className={styles.statCard}>
@@ -389,7 +389,7 @@ export default function Dashboard() {
                       <p className={styles.questionSnippet}>
                         {question.content
                           ? question.content.replace(/[#*`]/g, '').slice(0, 160) +
-                            (question.content.length > 160 ? '…' : '')
+                          (question.content.length > 160 ? '…' : '')
                           : ''}
                       </p>
 
