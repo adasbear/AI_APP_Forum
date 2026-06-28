@@ -80,6 +80,7 @@ export default function Profile() {
   };
 
   const handleAvatarUpdate = (newUrl) => {
+    // newUrl is the full Cloudinary HTTPS URL — store it directly
     setProfile((prev) => ({ ...prev, avatarUrl: newUrl }));
   };
 
@@ -134,18 +135,20 @@ export default function Profile() {
 
   if (!profile) return null;
 
-  const rawBackendUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3777";
-  let backendUrl = rawBackendUrl;
-  if (backendUrl.endsWith('/api')) {
-    backendUrl = backendUrl.slice(0, -4);
-  } else if (backendUrl.endsWith('/api/')) {
-    backendUrl = backendUrl.slice(0, -5);
+  // Cloudinary URLs are full https:// links — use them directly.
+  // Legacy local paths (e.g. /uploads/avatars/…) are prefixed with the backend base URL.
+  function resolveAvatar(url) {
+    if (!url) {
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.firstName)}+${encodeURIComponent(profile.lastName)}&background=random&size=150`;
+    }
+    if (url.startsWith('http')) return url;
+    const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3777')
+      .replace(/\/api\/?$/, '')
+      .replace(/\/$/, '');
+    return `${base}${url.startsWith('/') ? url : `/${url}`}`;
   }
-  backendUrl = backendUrl.replace(/\/$/, '');
 
-  const displayAvatar = profile.avatarUrl
-    ? `${backendUrl}${profile.avatarUrl.startsWith('/') ? profile.avatarUrl : `/${profile.avatarUrl}`}`
-    : `https://ui-avatars.com/api/?name=${profile.firstName}+${profile.lastName}&background=random&size=150`;
+  const displayAvatar = resolveAvatar(profile.avatarUrl);
 
   return (
     <div className={styles.container}>

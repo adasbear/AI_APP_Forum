@@ -14,7 +14,7 @@
  *     derived from the name (same person = same colour, always).
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './UserAvatar.module.css';
 
 const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3777';
@@ -68,6 +68,11 @@ export default function UserAvatar({ user, author, size = 36, className = '' }) 
 
   // Falls back to initials if the image 404s
   const [imgFailed, setImgFailed] = useState(false);
+
+  // Reset failure flag whenever the URL changes (e.g. after new upload)
+  useEffect(() => {
+    setImgFailed(false);
+  }, [avatarUrl]);
 
   const showImage = avatarUrl && !imgFailed;
 

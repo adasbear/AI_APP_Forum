@@ -116,6 +116,10 @@ export default function Sidebar({ isOpen, onClose }) {
                 alt='avatar'
                 className={styles['sidebar__avatar-image']}
                 referrerPolicy='no-referrer'
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.firstName || 'U')}+${encodeURIComponent(user?.lastName || '')}&background=random`;
+                }}
               />
             </div>
             <div className={styles.sidebar__info}>

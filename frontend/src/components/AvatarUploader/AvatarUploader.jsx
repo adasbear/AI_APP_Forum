@@ -2,12 +2,14 @@ import React, { useRef, useState } from 'react';
 import { Camera } from 'lucide-react';
 import { authService } from '../../services/auth/auth.service';
 import { useToast } from '../../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
 import styles from './AvatarUploader.module.css';
 
 export default function AvatarUploader({ currentAvatar, onUpdate }) {
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const { addToast } = useToast();
+  const { updateUser } = useAuth();
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
@@ -25,14 +27,21 @@ export default function AvatarUploader({ currentAvatar, onUpdate }) {
 
     setUploading(true);
     try {
+      // Returns the full Cloudinary HTTPS URL
       const newUrl = await authService.uploadAvatar(file);
+
+      // Update parent component (Profile page state)
       onUpdate(newUrl);
+
+      // Update AuthContext + localStorage so Navbar / UserAvatar show the new
+      // avatar immediately without requiring a page reload or Save Changes
+      updateUser({ avatar_url: newUrl, avatarUrl: newUrl });
+
       addToast({ type: 'success', message: 'Avatar updated!' });
     } catch (error) {
       addToast({ type: 'error', message: error.message || 'Upload failed' });
     } finally {
       setUploading(false);
-      // clear input
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -40,13 +49,19 @@ export default function AvatarUploader({ currentAvatar, onUpdate }) {
   return (
     <div className={styles.container}>
       <div className={styles.avatarWrapper}>
-        <img 
-          src={currentAvatar} 
-          alt="User Avatar" 
-          className={styles.avatarImage} 
+        <img
+          src={currentAvatar}
+          alt="User Avatar"
+          className={styles.avatarImage}
           style={{ opacity: uploading ? 0.5 : 1 }}
+          referrerPolicy="no-referrer"
         />
-        <button 
+        {uploading && (
+          <div className={styles.uploadingOverlay} aria-live="polite" aria-label="Uploading avatar">
+            <span className={styles.spinner} />
+          </div>
+        )}
+        <button
           type="button"
           className={styles.uploadButton}
           onClick={() => fileInputRef.current?.click()}
@@ -60,7 +75,7 @@ export default function AvatarUploader({ currentAvatar, onUpdate }) {
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept="image/png, image/jpeg, image/webp"
+        accept="image/png, image/jpeg, image/webp, image/gif"
         className={styles.hiddenInput}
       />
     </div>
