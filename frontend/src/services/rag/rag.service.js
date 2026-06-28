@@ -7,7 +7,9 @@ export const listDocuments = async () => {
     return docs.map(doc => ({
       ...doc,
       id: doc.document_id || doc.id,
-      file_name: doc.title || doc.file_name
+      file_name: doc.title || doc.file_name,
+      // storage_path is the full Cloudinary HTTPS URL
+      storage_path: doc.storage_path,
     }));
   } catch (error) {
     console.error('Error listing documents:', error);
@@ -68,14 +70,18 @@ export const queryDocument = async (documentId, query) => {
 };
 
 export const fetchPdfObjectUrl = async (documentId) => {
+  // The backend /file route now redirects to the Cloudinary URL.
+  // We simply return that URL directly from the document's storage_path
+  // (set by listDocuments) so the <object> tag can load it cross-origin.
+  // This function is kept for backward compatibility with RagDocuments.jsx.
+  // The caller should prefer passing doc.storage_path when available.
   try {
-    const response = await apiClient.get(
-      `/api/rag/documents/${documentId}/file`,
-      { responseType: 'blob' }
-    );
-    return URL.createObjectURL(response.data);
+    const response = await apiClient.get(`/api/rag/documents/${documentId}`);
+    const storagePath = response.data?.data?.storage_path;
+    if (!storagePath) throw new Error('No file URL available for this document');
+    return storagePath;
   } catch (error) {
-    console.error('Error fetching PDF:', error);
+    console.error('Error fetching PDF URL:', error);
     throw error;
   }
 };

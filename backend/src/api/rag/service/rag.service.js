@@ -29,6 +29,7 @@ export const listDocumentsForUserService = async (userId) => {
       byte_size,
       status,
       error_message,
+      storage_path,
       created_at,
       updated_at
     FROM documents
@@ -45,6 +46,7 @@ export const listDocumentsForUserService = async (userId) => {
     byte_size: row.byte_size,
     status: row.status,
     error_message: row.error_message,
+    storage_path: row.storage_path,   // Cloudinary URL — used directly by the frontend
     created_at: row.created_at,
     updated_at: row.updated_at,
   }));

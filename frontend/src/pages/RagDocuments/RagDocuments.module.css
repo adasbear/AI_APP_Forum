@@ -291,20 +291,42 @@
 
 /* READER PREVIEW */
 .previewBox {
-  height: 400px;
+  height: 500px;
   background-color: var(--surface-container-low);
   border-radius: 8px;
   overflow: hidden;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   border: 1px solid var(--border);
 }
 
 .pdfIframe {
+  flex: 1;
   width: 100%;
-  height: 100%;
   border: none;
+  min-height: 0;   /* required for flex children to shrink correctly */
+}
+
+/* "Open in new tab" fallback bar below the iframe */
+.pdfFallbackBar {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  background-color: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.pdfOpenLink {
+  font-size: 13px;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.pdfOpenLink:hover {
+  text-decoration: underline;
 }
 
 /* INPUTS & BUTTONS */

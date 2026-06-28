@@ -142,11 +142,18 @@ export default function RagDocuments() {
     }
   };
 
-  const handlePreview = async (docId) => {
-    if (!docId) return;
+  const handlePreview = async (doc) => {
+    if (!doc?.id) return;
     try {
       setPdfUrl(null);
-      const url = await fetchPdfObjectUrl(docId);
+      // If the document already carries its Cloudinary URL, use it directly
+      // without hitting the backend — avoids a redirect round-trip.
+      if (doc.storage_path) {
+        setPdfUrl(doc.storage_path);
+        return;
+      }
+      // Fallback: fetch the URL from the metadata endpoint
+      const url = await fetchPdfObjectUrl(doc.id);
       setPdfUrl(url);
     } catch (err) {
       console.error('Failed to load PDF:', err);
@@ -156,7 +163,7 @@ export default function RagDocuments() {
 
   useEffect(() => {
     if (activeDocument && activeDocument.status === 'ready') {
-      handlePreview(activeDocument.id);
+      handlePreview(activeDocument);
     } else {
       setPdfUrl(null);
     }
@@ -293,18 +300,24 @@ export default function RagDocuments() {
                   <p className={styles.sectionSubtitle}>Inline preview of the selected PDF.</p>
                   <div className={styles.previewBox}>
                     {pdfUrl ? (
-                      <object
-                        data={pdfUrl}
-                        type="application/pdf"
-                        className={styles.pdfIframe}
-                        aria-label="PDF Preview"
-                      >
-                        <embed
+                      <>
+                        <iframe
                           src={pdfUrl}
-                          type="application/pdf"
                           className={styles.pdfIframe}
+                          title="PDF Preview"
+                          allow="fullscreen"
                         />
-                      </object>
+                        <div className={styles.pdfFallbackBar}>
+                          <a
+                            href={pdfUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.pdfOpenLink}
+                          >
+                            Open PDF in new tab ↗
+                          </a>
+                        </div>
+                      </>
                     ) : (
                       <p className={styles.loadingText}>Loading PDF...</p>
                     )}
