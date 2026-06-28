@@ -1,5 +1,6 @@
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
+import { Readable } from "stream";
 
 // ── Cloudinary configuration ──────────────────────────────────────────────────
 cloudinary.config({
@@ -9,8 +10,6 @@ cloudinary.config({
 });
 
 // ── Memory storage — file arrives as req.file.buffer (no disk, no adapter) ───
-// We upload the raw buffer to Cloudinary manually in rag.service.js so the
-// binary data is never re-encoded or corrupted by multer-storage-cloudinary.
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
@@ -37,7 +36,8 @@ export const createDocumentMulterErrorHandler = (err, req, res, next) => {
 
 /**
  * Upload a Buffer to Cloudinary as a raw (non-image) resource.
- * Returns the secure_url of the uploaded file.
+ * Uses pipe() instead of stream.end() to guarantee the full buffer
+ * is flushed before the upload stream closes.
  *
  * @param {Buffer}  buffer       - Raw PDF bytes
  * @param {string}  originalName - Original filename (used for public_id)
@@ -48,19 +48,18 @@ export function uploadBufferToCloudinary(buffer, originalName) {
     const nameWithoutExt = originalName.replace(/\.pdf$/i, "");
     const publicId = `forum-rag-documents/${Date.now()}-${nameWithoutExt}`;
 
-    const stream = cloudinary.uploader.upload_stream(
-      {
-        resource_type: "raw",
-        public_id: publicId,
-        // Store as-is — no transformation for raw files
-      },
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { resource_type: "raw", public_id: publicId },
       (error, result) => {
         if (error) return reject(error);
         resolve(result.secure_url);
       },
     );
 
-    stream.end(buffer);
+    // Pipe a Readable built from the buffer into the upload stream.
+    // This is the reliable way to send a Buffer — stream.end(buffer) can
+    // close the stream before all bytes are flushed on some Node versions.
+    Readable.from(buffer).pipe(uploadStream);
   });
 }
 
