@@ -155,6 +155,35 @@ async function changePassword(data) {
 }
 
 /**
+ * Sends a forgot-password email request.
+ * Always succeeds from the server side (anti-enumeration).
+ *
+ * @param {string} email
+ */
+async function forgotPassword(email) {
+  try {
+    const response = await apiClient.post('/api/auth/forgot-password', { email });
+    return response.data;
+  } catch (error) {
+    throw handleAuthError(error);
+  }
+}
+
+/**
+ * Resets the user's password using a token from the email link.
+ *
+ * @param {{ token: string, newPassword: string }} data
+ */
+async function resetPassword(data) {
+  try {
+    const response = await apiClient.post('/api/auth/reset-password', data);
+    return response.data;
+  } catch (error) {
+    throw handleAuthError(error);
+  }
+}
+
+/**
  * Service for handling auth-related requests.
  */
 export const authService = {
@@ -168,4 +197,6 @@ export const authService = {
   updateProfile,
   uploadAvatar,
   changePassword,
+  forgotPassword,
+  resetPassword,
 };

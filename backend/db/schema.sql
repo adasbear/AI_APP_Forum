@@ -48,6 +48,8 @@ CREATE TABLE `users` (
     `password_hash` VARCHAR(255) NOT NULL COMMENT 'Bcrypt hashed password',
     `avatar_url` VARCHAR(1024) NULL COMMENT 'URL to user profile picture',
     `bio` TEXT NULL COMMENT 'User biography/description',
+    `reset_token_hash` VARCHAR(64) NULL DEFAULT NULL COMMENT 'SHA-256 hash of the one-time password reset token',
+    `reset_token_expires_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Expiry timestamp of the password reset token (15 min TTL)',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Account creation timestamp',
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last profile update timestamp',
     

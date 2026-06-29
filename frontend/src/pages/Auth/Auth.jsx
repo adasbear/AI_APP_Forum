@@ -4,7 +4,7 @@
 import { useState } from 'react';
 
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Sparkles,
   Code,
@@ -311,6 +311,14 @@ export default function Auth() {
                     <label htmlFor='password' className={styles.auth__label}>
                       Password
                     </label>
+                    {isLogin && (
+                      <Link
+                        to='/forgot-password'
+                        className={styles.auth__labelLink}
+                      >
+                        Forgot password?
+                      </Link>
+                    )}
                   </div>
                   <div className={styles.auth__passwordWrap}>
                     <input

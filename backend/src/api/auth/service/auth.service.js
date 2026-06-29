@@ -5,6 +5,8 @@ import {
   BadRequestError,
   UnauthenticatedError,
 } from "../../../utils/errors/index.js";
+import { generateResetToken, hashToken } from "../../../utils/token.js";
+import { sendPasswordResetEmail } from "../../../services/email.service.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1d";
@@ -200,4 +202,94 @@ export const changePasswordService = async (userId, currentPassword, newPassword
 
   const updateSql = "UPDATE users SET password_hash = ? WHERE user_id = ?";
   await safeExecute(updateSql, [hashedNewPassword, userId]);
+};
+
+// ─── Password Reset ───────────────────────────────────────────────────────────
+
+/**
+ * Initiates the forgot-password flow.
+ *
+ * Always returns successfully — even when the email is not found —
+ * to prevent user enumeration attacks.
+ *
+ * @param {string} email - The email address submitted by the user.
+ * @returns {Promise<void>}
+ */
+export const forgotPasswordService = async (email) => {
+  const normalizedEmail = normalizeEmail(email);
+
+  // Silently do nothing if no user found (prevents enumeration)
+  const rows = await safeExecute(
+    "SELECT user_id, first_name FROM users WHERE email = ? LIMIT 1",
+    [normalizedEmail]
+  );
+  if (rows.length === 0) return;
+
+  const user = rows[0];
+
+  // Generate a secure token; store only the hash
+  const { rawToken, tokenHash } = generateResetToken();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+
+  await safeExecute(
+    "UPDATE users SET reset_token_hash = ?, reset_token_expires_at = ? WHERE user_id = ?",
+    [tokenHash, expiresAt, user.user_id]
+  );
+
+  // Build the reset URL (frontend handles the /reset-password route)
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const resetLink = `${frontendUrl}/reset-password?token=${rawToken}`;
+
+  // Fire-and-forget — if email fails it shouldn't expose user existence
+  await sendPasswordResetEmail({
+    toEmail: normalizedEmail,
+    firstName: user.first_name,
+    resetLink,
+  });
+};
+
+/**
+ * Completes the password reset using the token sent to the user's email.
+ *
+ * @param {string} rawToken    - The token from the URL query parameter.
+ * @param {string} newPassword - The new plain-text password.
+ * @returns {Promise<void>}
+ * @throws {BadRequestError} If the token is invalid, expired, or already used.
+ */
+export const resetPasswordService = async (rawToken, newPassword) => {
+  const tokenHash = hashToken(rawToken);
+
+  const rows = await safeExecute(
+    `SELECT user_id, reset_token_expires_at
+     FROM users
+     WHERE reset_token_hash = ?
+     LIMIT 1`,
+    [tokenHash]
+  );
+
+  if (rows.length === 0) {
+    throw new BadRequestError("This password reset link is invalid or has already been used.");
+  }
+
+  const user = rows[0];
+
+  if (new Date() > new Date(user.reset_token_expires_at)) {
+    // Clean up expired token
+    await safeExecute(
+      "UPDATE users SET reset_token_hash = NULL, reset_token_expires_at = NULL WHERE user_id = ?",
+      [user.user_id]
+    );
+    throw new BadRequestError("This password reset link has expired. Please request a new one.");
+  }
+
+  const salt = await bcrypt.genSalt(12);
+  const passwordHash = await bcrypt.hash(newPassword, salt);
+
+  // Update password and clear token in one atomic operation (single-use enforcement)
+  await safeExecute(
+    `UPDATE users
+     SET password_hash = ?, reset_token_hash = NULL, reset_token_expires_at = NULL
+     WHERE user_id = ?`,
+    [passwordHash, user.user_id]
+  );
 };

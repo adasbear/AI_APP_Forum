@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import { registerService, loginService, getProfileService, updateProfileService, changePasswordService } from '../service/auth.service.js';
+import { registerService, loginService, getProfileService, updateProfileService, changePasswordService, forgotPasswordService, resetPasswordService } from '../service/auth.service.js';
 
 /**
  * Handles user registration requests.
@@ -107,6 +107,51 @@ export const changePasswordController = async (req, res, next) => {
 
     await changePasswordService(userId, currentPassword, newPassword);
     res.status(StatusCodes.OK).json({ success: true, message: 'Password changed successfully.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Initiates the forgot-password flow. Always returns a generic success response
+ * to prevent user enumeration attacks.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export const forgotPasswordController = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    // Service handles user-not-found silently
+    await forgotPasswordService(email);
+
+    // Always return success — do NOT reveal whether the email exists
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: 'If an account with that email exists, we have sent a password reset link.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Completes the password reset using the token from the email link.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export const resetPasswordController = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+    await resetPasswordService(token, newPassword);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: 'Password reset successfully. You can now log in with your new password.',
+    });
   } catch (error) {
     next(error);
   }

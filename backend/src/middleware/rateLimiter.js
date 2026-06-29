@@ -10,6 +10,17 @@ export const authLimiter = rateLimit({
   skip: (req) => req.method !== "POST", // Only limit POST requests
 });
 
+// Password reset limiter: 3 requests per 15 minutes per IP
+// Stricter than login limiter to prevent email spam / token brute-force
+export const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3,
+  message: "Too many password reset requests. Please wait 15 minutes and try again.",
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method !== "POST",
+});
+
 // AI endpoint limiter: 20 requests per minute per user
 export const aiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute

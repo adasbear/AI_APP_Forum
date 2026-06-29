@@ -31,6 +31,8 @@ import MyQuestions from "./pages/MyQuestions/MyQuestions";
 import Profile from "./pages/Profile/Profile";
 import RagDocuments from './pages/RagDocuments/RagDocuments';
 import MyBookmarks from './pages/MyBookmarks/MyBookmarks';
+import ForgotPassword from './pages/ForgotPassword/ForgotPassword';
+import ResetPassword from './pages/ResetPassword/ResetPassword';
 
 function App() {
   return (
@@ -40,6 +42,8 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Protected Routes */}
           <Route element={<Layout />}>

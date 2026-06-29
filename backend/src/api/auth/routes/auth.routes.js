@@ -1,4 +1,4 @@
-import { authLimiter } from '../../../middleware/rateLimiter.js';
+import { authLimiter, passwordResetLimiter } from '../../../middleware/rateLimiter.js';
 import express from 'express';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
@@ -9,10 +9,14 @@ import {
   getProfileController,
   updateProfileController,
   changePasswordController,
+  forgotPasswordController,
+  resetPasswordController,
 } from '../controller/auth.controller.js';
 import {
   registerValidation,
   loginValidation,
+  forgotPasswordValidation,
+  resetPasswordValidation,
 } from '../validations/auth.validation.js';
 import { authenticateUser } from '../../../middleware/authentication.js';
 import { updateProfileService } from '../service/auth.service.js';
@@ -86,6 +90,29 @@ router.put('/profile', authenticateUser, updateProfileController);
  * @access Private
  */
 router.put('/password', authenticateUser, changePasswordController);
+
+/**
+ * @route POST /api/auth/forgot-password
+ * @desc  Request a password reset email (rate limited, no enumeration)
+ * @access Public
+ */
+router.post(
+  '/forgot-password',
+  passwordResetLimiter,
+  forgotPasswordValidation,
+  forgotPasswordController,
+);
+
+/**
+ * @route POST /api/auth/reset-password
+ * @desc  Reset password using the token from the email link
+ * @access Public
+ */
+router.post(
+  '/reset-password',
+  resetPasswordValidation,
+  resetPasswordController,
+);
 
 /**
  * @route POST /api/auth/avatar

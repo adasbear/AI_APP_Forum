@@ -39,6 +39,7 @@
     "multer-storage-cloudinary": "^4.0.0",
     "mysql2": "^3.18.2",
     "pdf-parse": "^2.4.5",
+    "resend": "^4.6.0",
     "swagger-jsdoc": "^6.3.0",
     "xss": "^1.0.15"
   },
