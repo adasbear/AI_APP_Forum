@@ -1,13 +1,35 @@
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
-import { PassThrough } from "stream";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DEBUG_LOG = path.resolve(__dirname, "../../../debug-ec5947.log");
+
+function agentDebugLog(payload) {
+  // #region agent log
+  try {
+    fs.appendFileSync(
+      DEBUG_LOG,
+      `${JSON.stringify({ sessionId: "ec5947", timestamp: Date.now(), ...payload })}\n`,
+    );
+  } catch {
+    // ignore logging failures
+  }
+  // #endregion
+}
 
 // ── Cloudinary configuration ──────────────────────────────────────────────────
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+function ensureCloudinaryConfigured() {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+}
+
+ensureCloudinaryConfigured();
 
 // ── Memory storage — file arrives as req.file.buffer (no disk, no adapter) ───
 const storage = multer.memoryStorage();
@@ -37,33 +59,63 @@ export const createDocumentMulterErrorHandler = (err, req, res, next) => {
 /**
  * Upload a Buffer to Cloudinary as a raw (non-image) resource.
  *
- * Uses a PassThrough stream: write the full buffer in one call then end the
- * stream. This is the canonical pattern for uploading a Buffer with the
- * Cloudinary Node SDK — upload_stream expects a writable stream and
- * PassThrough bridges the gap cleanly.
- *
  * @param {Buffer}  buffer       - Raw PDF bytes
  * @param {string}  originalName - Original filename (used for public_id)
  * @returns {Promise<string>}    - Cloudinary secure_url
  */
 export function uploadBufferToCloudinary(buffer, originalName) {
   return new Promise((resolve, reject) => {
+    ensureCloudinaryConfigured();
+
     const nameWithoutExt = originalName.replace(/\.pdf$/i, "");
     const publicId = `forum-rag-documents/${Date.now()}-${nameWithoutExt}`;
+
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: "B",
+      location: "rag.upload.config.js:uploadBufferToCloudinary:entry",
+      message: "Cloudinary upload starting",
+      data: {
+        bufferLength: buffer?.length ?? null,
+        isBuffer: Buffer.isBuffer(buffer),
+        byteOffset: buffer?.byteOffset ?? null,
+        byteLength: buffer?.byteLength ?? null,
+        pdfMagic: buffer?.slice?.(0, 5)?.toString?.("ascii") ?? null,
+        originalName,
+        publicId,
+        cloudConfigured: Boolean(
+          process.env.CLOUDINARY_CLOUD_NAME &&
+            process.env.CLOUDINARY_API_KEY &&
+            process.env.CLOUDINARY_API_SECRET,
+        ),
+      },
+    });
+    // #endregion
 
     const uploadStream = cloudinary.uploader.upload_stream(
       { resource_type: "raw", public_id: publicId },
       (error, result) => {
+        // #region agent log
+        agentDebugLog({
+          hypothesisId: error ? "A,C,D,E" : "A,C",
+          location: "rag.upload.config.js:uploadBufferToCloudinary:callback",
+          message: error ? "Cloudinary upload failed" : "Cloudinary upload succeeded",
+          data: {
+            errorMessage: error?.message ?? null,
+            errorHttpCode: error?.http_code ?? null,
+            secureUrl: result?.secure_url ?? null,
+            bytesWritten: buffer?.length ?? null,
+            uploadStreamWritableEnded: uploadStream?.writableEnded ?? null,
+          },
+        });
+        // #endregion
         if (error) return reject(error);
         resolve(result.secure_url);
       },
     );
 
-    // PassThrough pipes data straight through — write the full buffer as a
-    // single chunk then end, which guarantees Cloudinary receives all bytes.
-    const passThrough = new PassThrough();
-    passThrough.pipe(uploadStream);
-    passThrough.end(buffer);
+    // Write directly to Cloudinary's upload stream (avoids PassThrough pipe races).
+    uploadStream.end(buffer);
   });
 }
 
