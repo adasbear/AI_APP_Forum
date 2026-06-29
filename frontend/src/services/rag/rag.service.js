@@ -68,28 +68,26 @@ export const queryDocument = async (documentId, query) => {
 };
 
 /**
- * Fetches a short-lived signed URL for a PDF from the backend,
- * then returns it for use in an <iframe>.
+ * Fetches the PDF from the backend proxy endpoint as a blob,
+ * then creates an object URL for use in an <iframe>.
  *
- * The /file endpoint generates a 1-hour signed Cloudinary URL,
- * which works for both private (legacy) and public (new) uploads.
+ * The backend fetches the file from Cloudinary server-side using
+ * authenticated credentials, so no Cloudinary auth is needed in the browser.
  *
  * @param {number|string} documentId
- * @returns {Promise<string>} signed URL
+ * @returns {Promise<string>} blob object URL
  */
 export const fetchPdfObjectUrl = async (documentId) => {
   try {
-    const response = await apiClient.get(`/api/rag/documents/${documentId}/file`);
-    const url = response.data?.url;
-    if (!url) throw new Error('No URL returned from server');
-    return url;
+    const response = await apiClient.get(`/api/rag/documents/${documentId}/file`, {
+      responseType: 'blob',
+    });
+    const blob = response.data instanceof Blob
+      ? response.data
+      : new Blob([response.data], { type: 'application/pdf' });
+    return URL.createObjectURL(blob);
   } catch (error) {
-    console.error('Error fetching PDF URL:', error);
+    console.error('Error fetching PDF:', error);
     throw error;
   }
 };
-
-/**
- * @deprecated Use fetchPdfObjectUrl instead.
- */
-export const getPdfUrl = (storagePath) => storagePath;

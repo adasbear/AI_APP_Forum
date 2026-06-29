@@ -29,6 +29,14 @@ export default function RagDocuments() {
   const [toast, setToast] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
   const fileInputRef = React.useRef(null);
+  const pdfBlobUrlRef = React.useRef(null);
+
+  const revokePdfBlobUrl = () => {
+    if (pdfBlobUrlRef.current) {
+      URL.revokeObjectURL(pdfBlobUrlRef.current);
+      pdfBlobUrlRef.current = null;
+    }
+  };
 
   const showToast = (title, message, type = 'error') => {
     setToast({ title, message, type });
@@ -145,14 +153,20 @@ export default function RagDocuments() {
   const handlePreview = async (doc) => {
     if (!doc?.id) return;
     try {
+      revokePdfBlobUrl();
       setPdfUrl(null);
       const url = await fetchPdfObjectUrl(doc.id);
+      pdfBlobUrlRef.current = url;
       setPdfUrl(url);
     } catch (err) {
       console.error('Failed to load PDF:', err);
       showToast('Failed to load PDF', err.message, 'error');
     }
   };
+
+  useEffect(() => {
+    return () => revokePdfBlobUrl();
+  }, []);
 
   useEffect(() => {
     if (activeDocument && activeDocument.status === 'ready') {
