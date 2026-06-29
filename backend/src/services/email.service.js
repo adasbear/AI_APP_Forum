@@ -1,10 +1,27 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const FROM_ADDRESS =
   process.env.EMAIL_FROM ||
   'Evangadi Forum <noreply@evangadiforum.com>';
+
+// Lazy singleton — instantiated on first use so a missing key
+// does NOT crash the server at startup. A clear error is thrown
+// only when an email is actually attempted.
+let _resend = null;
+
+function getResendClient() {
+  if (_resend) return _resend;
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      'RESEND_API_KEY is not set. Add it to your Render environment variables to enable email sending.',
+    );
+  }
+
+  _resend = new Resend(apiKey);
+  return _resend;
+}
 
 /**
  * Sends a password reset email to the user
@@ -20,7 +37,7 @@ export async function sendPasswordResetEmail({
     expiryMinutes: 15,
   });
 
-  await resend.emails.send({
+  await getResendClient().emails.send({
     from: FROM_ADDRESS,
     to: toEmail,
     subject: 'Reset your password – Evangadi Forum',
