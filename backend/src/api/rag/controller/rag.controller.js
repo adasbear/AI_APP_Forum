@@ -1,5 +1,4 @@
 import { StatusCodes } from "http-status-codes";
-import { cloudinary } from "../../../middleware/rag.upload.config.js";
 import {
   listDocumentsForUserService,
   getDocumentMetaService,
@@ -67,10 +66,10 @@ export const createDocumentController = async (req, res, next) => {
 /**
  * GET /api/rag/documents/:documentId/file
  *
- * Proxies the PDF through the backend.
- * Fetches the file from Cloudinary server-side using the Admin API
- * to resolve the authenticated URL, then streams the bytes to the client.
- * The browser never touches Cloudinary directly, so no 401s.
+ * Proxies the PDF through the backend by fetching it from Cloudinary
+ * server-side with HTTP Basic Auth (api_key:api_secret).
+ * This works for both private and public assets — the browser never
+ * touches Cloudinary directly so there are no 401s.
  */
 export const getDocumentFileController = async (req, res, next) => {
   try {
@@ -86,31 +85,28 @@ export const getDocumentFileController = async (req, res, next) => {
     }
 
     const storagePath = document.storage_path;
-    const uploadIndex = storagePath.indexOf("/upload/");
 
-    if (uploadIndex === -1) {
-      // Not a Cloudinary URL — redirect as-is
-      return res.redirect(storagePath);
+    // Build HTTP Basic Auth header from Cloudinary credentials
+    const apiKey    = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!apiKey || !apiSecret) {
+      console.error("CLOUDINARY_API_KEY or CLOUDINARY_API_SECRET not set");
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: "Storage credentials not configured",
+      });
     }
 
-    // Extract public_id from URL:
-    // https://res.cloudinary.com/<cloud>/raw/upload/v<ver>/<public_id>.pdf
-    let afterUpload = storagePath.slice(uploadIndex + "/upload/".length);
-    afterUpload = afterUpload.replace(/^v\d+\//, "");       // strip version
-    const publicId = afterUpload.replace(/\.[^/.]+$/, "");  // strip extension
+    const basicAuth = Buffer.from(`${apiKey}:${apiSecret}`).toString("base64");
 
-    // Fetch via Admin API — this call is server-to-server with API credentials
-    // and returns metadata including a fresh secure_url we can fetch directly.
-    const resource = await cloudinary.api.resource(publicId, {
-      resource_type: "raw",
-      type: "upload",
+    // Fetch the PDF from Cloudinary server-side with credentials
+    const cloudRes = await fetch(storagePath, {
+      headers: { Authorization: `Basic ${basicAuth}` },
     });
 
-    // The secure_url from the Admin API is accessible server-side
-    // because our server's IP is not subject to browser CORS / auth restrictions.
-    const cloudRes = await fetch(resource.secure_url);
-
     if (!cloudRes.ok) {
+      console.error(`Cloudinary fetch failed: ${cloudRes.status} ${cloudRes.statusText} for ${storagePath}`);
       return res.status(StatusCodes.BAD_GATEWAY).json({
         success: false,
         message: `Failed to retrieve PDF from storage (${cloudRes.status})`,
@@ -126,6 +122,7 @@ export const getDocumentFileController = async (req, res, next) => {
     res.setHeader("Cache-Control", "private, max-age=3600");
     return res.send(pdfBuffer);
   } catch (error) {
+    console.error("getDocumentFileController error:", error?.message || error);
     next(error);
   }
 };
