@@ -14,6 +14,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import PasswordStrengthIndicator from '../../components/PasswordStrengthIndicator/PasswordStrengthIndicator';
 import styles from './Auth.module.css';
 
 export default function Auth() {
@@ -78,8 +79,24 @@ export default function Auth() {
         setError('Last name must be at least 3 characters long.');
         return;
       }
-      if (password.length < 6) {
-        setError('Password must be at least 6 characters long.');
+      if (password.length < 8) {
+        setError('Password must be at least 8 characters long.');
+        return;
+      }
+      if (!/[A-Z]/.test(password)) {
+        setError('Password must contain at least one uppercase letter.');
+        return;
+      }
+      if (!/[a-z]/.test(password)) {
+        setError('Password must contain at least one lowercase letter.');
+        return;
+      }
+      if (!/[0-9]/.test(password)) {
+        setError('Password must contain at least one number.');
+        return;
+      }
+      if (!/[^A-Za-z0-9]/.test(password)) {
+        setError('Password must contain at least one special character.');
         return;
       }
     }
@@ -320,6 +337,9 @@ export default function Auth() {
                       )}
                     </button>
                   </div>
+                  {!isLogin && (
+                    <PasswordStrengthIndicator password={password} />
+                  )}
                 </div>
 
                 {successMessage && (
