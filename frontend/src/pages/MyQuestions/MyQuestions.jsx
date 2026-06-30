@@ -60,7 +60,7 @@ export default function MyQuestions() {
           <p>Questions you have posted.</p>
         </div>
 
-        <button className={styles.newBtn} onClick={() => navigate("/ask")}>
+        <button className={styles.newBtn} onClick={() => navigate("/questions/ask")}>
           + New question
         </button>
       </div>

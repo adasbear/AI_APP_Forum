@@ -2,6 +2,9 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "Evangadi AI-Powered Forum Backend API",
+  "engines": {
+    "node": ">=18.17.0"
+  },
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",

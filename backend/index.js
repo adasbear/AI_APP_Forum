@@ -16,7 +16,10 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:3000","https://ai-powered-forum-project-g4.onrender.com"]
+  origin: ["http://localhost:5173","https://ai-powered-forum-project.vercel.app","https://evangadi-forum.tesfaworku.com", "http://localhost:3000","https://ai-powered-forum-project-g4.onrender.com"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

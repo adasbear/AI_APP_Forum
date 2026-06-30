@@ -13,7 +13,12 @@ import {
 } from "../../../utils/errors/index.js";
 import { embedQuery, getGeminiClient } from "../../../utils/gemini.js";
 import { cosineSimilarity } from "../../../utils/math.js";
-import { cloudinary, uploadBufferToCloudinary } from "../../../middleware/rag.upload.config.js";
+import {
+  cloudinary,
+  uploadBufferToCloudinary,
+  extractPublicIdFromCloudinaryUrl,
+  getCloudinaryPublicIdCandidates,
+} from "../../../middleware/rag.upload.config.js";
 
 const K_CHUNKS = 5;
 
@@ -113,27 +118,38 @@ export const deleteDocumentService = async (documentId, userId) => {
   // Cloudinary raw public_id is derived from the URL path between /upload/ and the extension.
   if (document.storage_path) {
     try {
-      // storage_path is now the full Cloudinary URL, e.g.
-      // https://res.cloudinary.com/dhat3cisg/raw/upload/v123/forum-rag-documents/1234-filename.pdf
-      // We need to extract the public_id: "forum-rag-documents/1234-filename"
-      const url = document.storage_path;
-      const uploadIndex = url.indexOf("/upload/");
-      if (uploadIndex !== -1) {
-        // Everything after /upload/v<version>/ and before the last extension
-        let afterUpload = url.slice(uploadIndex + "/upload/".length);
-        // Strip version segment (v followed by digits)
-        afterUpload = afterUpload.replace(/^v\d+\//, "");
-        // Strip file extension
-        const publicId = afterUpload.replace(/\.[^/.]+$/, "");
-        await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+      const publicId = extractPublicIdFromCloudinaryUrl(document.storage_path);
+      const candidates = getCloudinaryPublicIdCandidates(publicId);
+
+      for (const candidateId of candidates) {
+        try {
+          await cloudinary.uploader.destroy(candidateId, { resource_type: "raw" });
+          break;
+        } catch (destroyErr) {
+          console.warn("Cloudinary delete attempt failed:", candidateId, destroyErr.message);
+        }
       }
     } catch (err) {
-      // Log but don't block deletion — DB record should still be removed
       console.warn("Cloudinary delete failed:", err.message);
     }
   }
 
-  // Delete document record (CASCADE removes chunks + vectors automatically)
+  // Explicitly delete dependent records to ensure cleanup across all DB engines
+  // 1. Delete vectors
+  await safeExecute(
+    `DELETE v FROM document_chunk_vectors v
+     INNER JOIN document_chunks c ON v.chunk_id = c.chunk_id
+     WHERE c.document_id = ?`,
+    [documentId],
+  );
+
+  // 2. Delete chunks
+  await safeExecute(
+    `DELETE FROM document_chunks WHERE document_id = ?`,
+    [documentId],
+  );
+
+  // 3. Delete main document record
   await safeExecute(
     `DELETE FROM documents WHERE document_id = ?`,
     [documentId],
@@ -170,11 +186,15 @@ export async function createDocumentFromUploadService({ file, userId }) {
     // worker thread, which detaches it on the main thread. Uploading after
     // parse sends an empty payload to Cloudinary ("Empty file" 400).
     console.log("Uploading PDF buffer to Cloudinary...");
-    const cloudinaryUrl = await uploadBufferToCloudinary(
-      Buffer.from(rawBuffer),
-      file.originalname,
-    );
-    console.log("Cloudinary URL:", cloudinaryUrl);
+    const { secureUrl: cloudinaryUrl, publicId: cloudinaryPublicId } =
+      await uploadBufferToCloudinary(Buffer.from(rawBuffer), file.originalname);
+
+    console.log("Cloudinary upload complete:", { cloudinaryUrl, cloudinaryPublicId });
+
+    // Sanity-check: make sure the URL is a valid HTTPS Cloudinary URL
+    if (!cloudinaryUrl.startsWith("https://res.cloudinary.com/")) {
+      throw new Error(`Unexpected Cloudinary URL format: ${cloudinaryUrl}`);
+    }
 
     // ── 2. Parse PDF from in-memory buffer (may detach underlying ArrayBuffer) ──
     console.log("Processing PDF:", {

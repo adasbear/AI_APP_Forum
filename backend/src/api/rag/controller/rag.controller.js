@@ -1,5 +1,8 @@
 import { StatusCodes } from "http-status-codes";
-import { cloudinary } from "../../../middleware/rag.upload.config.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { downloadCloudinaryRawPdf } from "../../../middleware/rag.upload.config.js";
 import {
   listDocumentsForUserService,
   getDocumentMetaService,
@@ -9,6 +12,22 @@ import {
   queryDocumentService,
   deleteDocumentService,
 } from "../service/rag.service.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DEBUG_LOG = path.resolve(__dirname, "../../../../../debug-ec5947.log");
+
+function agentDebugLog(payload) {
+  // #region agent log
+  try {
+    fs.appendFileSync(
+      DEBUG_LOG,
+      `${JSON.stringify({ sessionId: "ec5947", timestamp: Date.now(), ...payload })}\n`,
+    );
+  } catch {
+    // ignore logging failures
+  }
+  // #endregion
+}
 
 /**
  * GET /api/rag/documents
@@ -67,49 +86,122 @@ export const createDocumentController = async (req, res, next) => {
 /**
  * GET /api/rag/documents/:documentId/file
  *
- * Returns a short-lived signed Cloudinary URL for the PDF.
- * This works for both private (legacy) and public (new) uploads.
- * The frontend loads the signed URL directly in the <iframe>.
+ * Proxies the PDF through Express so the browser never talks to Cloudinary
+ * directly. Uses Cloudinary's Admin download API (api_key + signature) which
+ * works even when anonymous PDF delivery is restricted (401 ACL failure).
  */
 export const getDocumentFileController = async (req, res, next) => {
+  const { documentId } = req.params;
+  const userId = req.user?.id;
+
   try {
-    const userId = req.user?.id;
-    const { documentId } = req.params;
+    console.log("STEP 1: Request received");
+    console.log({ userId, documentId });
+
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: "route",
+      location: "rag.controller.js:getDocumentFileController:step1",
+      message: "Request received",
+      data: { userId, documentId },
+    });
+    // #endregion
+
+    console.log("STEP 2: Loading document from database");
     const document = await assertOwnedDocument(documentId, userId);
+
+    console.log("STEP 2: Database document");
+    console.log({
+      document_id: document.document_id,
+      title: document.title,
+      byte_size: document.byte_size,
+      status: document.status,
+      storage_path: document.storage_path,
+    });
+
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: "db",
+      location: "rag.controller.js:getDocumentFileController:step2",
+      message: "Document loaded",
+      data: {
+        documentId: document.document_id,
+        hasStoragePath: Boolean(document.storage_path),
+        storagePathIsHttps: document.storage_path?.startsWith("https://") ?? false,
+        byteSize: document.byte_size,
+      },
+    });
+    // #endregion
 
     if (!document.storage_path) {
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
-        message: "No file URL found for this document",
+        message: "No file URL found for this document.",
       });
     }
 
-    // Extract the public_id from the stored Cloudinary URL.
-    // URL format: https://res.cloudinary.com/<cloud>/raw/upload/v<ver>/<public_id>.pdf
-    const url = document.storage_path;
-    const uploadIndex = url.indexOf("/upload/");
-    if (uploadIndex === -1) {
-      // Not a Cloudinary URL — return as-is
-      return res.json({ success: true, url });
-    }
+    console.log("STEP 3: storage_path");
+    console.log(document.storage_path);
 
-    let afterUpload = url.slice(uploadIndex + "/upload/".length);
-    afterUpload = afterUpload.replace(/^v\d+\//, "");           // strip version
-    const publicId = afterUpload.replace(/\.[^/.]+$/, "");      // strip extension
+    console.log("STEP 4: Downloading PDF from Cloudinary (Admin API)");
+    const { buffer: pdfBuffer, publicId, bytes } =
+      await downloadCloudinaryRawPdf(document.storage_path);
 
-    // Generate a signed URL valid for 1 hour
-    const signedUrl = cloudinary.url(publicId, {
-      resource_type: "raw",
-      type: "upload",
-      sign_url: true,
-      expires_at: Math.floor(Date.now() / 1000) + 3600,
-      format: "pdf",
-      secure: true,
+    console.log("STEP 5: Cloudinary download success");
+    console.log({
+      publicId,
+      bytes,
+      pdfMagic: pdfBuffer.slice(0, 5).toString("ascii"),
     });
 
-    return res.json({ success: true, url: signedUrl });
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: "cloudinary",
+      location: "rag.controller.js:getDocumentFileController:step5",
+      message: "Cloudinary download succeeded",
+      data: {
+        documentId,
+        publicId,
+        bytes,
+        pdfMagic: pdfBuffer.slice(0, 5).toString("ascii"),
+      },
+    });
+    // #endregion
+
+    const filename = (document.title || "document.pdf")
+      .replace(/[^\w\s.-]/g, "_")
+      .replace(/\s+/g, "_");
+
+    res.setHeader("Content-Type", document.mime_type || "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+    res.setHeader("Content-Length", pdfBuffer.length);
+    res.setHeader("Cache-Control", "private, max-age=3600");
+    return res.send(pdfBuffer);
   } catch (error) {
-    next(error);
+    console.error("STEP ERROR: PDF proxy failed");
+    console.error(error);
+    console.error(error?.stack);
+
+    // #region agent log
+    agentDebugLog({
+      hypothesisId: "cloudinary",
+      location: "rag.controller.js:getDocumentFileController:error",
+      message: "PDF proxy failed",
+      data: {
+        documentId,
+        errorMessage: error?.message ?? String(error),
+      },
+    });
+    // #endregion
+
+    if (error?.statusCode === StatusCodes.NOT_FOUND) {
+      return next(error);
+    }
+
+    return res.status(StatusCodes.BAD_GATEWAY).json({
+      success: false,
+      message: error?.message || "Failed to retrieve PDF from storage",
+    });
   }
 };
 
