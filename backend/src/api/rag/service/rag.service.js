@@ -134,7 +134,22 @@ export const deleteDocumentService = async (documentId, userId) => {
     }
   }
 
-  // Delete document record (CASCADE removes chunks + vectors automatically)
+  // Explicitly delete dependent records to ensure cleanup across all DB engines
+  // 1. Delete vectors
+  await safeExecute(
+    `DELETE v FROM document_chunk_vectors v
+     INNER JOIN document_chunks c ON v.chunk_id = c.chunk_id
+     WHERE c.document_id = ?`,
+    [documentId],
+  );
+
+  // 2. Delete chunks
+  await safeExecute(
+    `DELETE FROM document_chunks WHERE document_id = ?`,
+    [documentId],
+  );
+
+  // 3. Delete main document record
   await safeExecute(
     `DELETE FROM documents WHERE document_id = ?`,
     [documentId],
