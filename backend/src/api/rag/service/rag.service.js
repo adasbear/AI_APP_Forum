@@ -13,7 +13,12 @@ import {
 } from "../../../utils/errors/index.js";
 import { embedQuery, getGeminiClient } from "../../../utils/gemini.js";
 import { cosineSimilarity } from "../../../utils/math.js";
-import { cloudinary, uploadBufferToCloudinary } from "../../../middleware/rag.upload.config.js";
+import {
+  cloudinary,
+  uploadBufferToCloudinary,
+  extractPublicIdFromCloudinaryUrl,
+  getCloudinaryPublicIdCandidates,
+} from "../../../middleware/rag.upload.config.js";
 
 const K_CHUNKS = 5;
 
@@ -113,22 +118,18 @@ export const deleteDocumentService = async (documentId, userId) => {
   // Cloudinary raw public_id is derived from the URL path between /upload/ and the extension.
   if (document.storage_path) {
     try {
-      // storage_path is now the full Cloudinary URL, e.g.
-      // https://res.cloudinary.com/dhat3cisg/raw/upload/v123/forum-rag-documents/1234-filename.pdf
-      // We need to extract the public_id: "forum-rag-documents/1234-filename"
-      const url = document.storage_path;
-      const uploadIndex = url.indexOf("/upload/");
-      if (uploadIndex !== -1) {
-        // Everything after /upload/v<version>/ and before the last extension
-        let afterUpload = url.slice(uploadIndex + "/upload/".length);
-        // Strip version segment (v followed by digits)
-        afterUpload = afterUpload.replace(/^v\d+\//, "");
-        // Strip file extension
-        const publicId = afterUpload.replace(/\.[^/.]+$/, "");
-        await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+      const publicId = extractPublicIdFromCloudinaryUrl(document.storage_path);
+      const candidates = getCloudinaryPublicIdCandidates(publicId);
+
+      for (const candidateId of candidates) {
+        try {
+          await cloudinary.uploader.destroy(candidateId, { resource_type: "raw" });
+          break;
+        } catch (destroyErr) {
+          console.warn("Cloudinary delete attempt failed:", candidateId, destroyErr.message);
+        }
       }
     } catch (err) {
-      // Log but don't block deletion — DB record should still be removed
       console.warn("Cloudinary delete failed:", err.message);
     }
   }

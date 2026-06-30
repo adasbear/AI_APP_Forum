@@ -109,13 +109,79 @@ export function uploadBufferToCloudinary(buffer, originalName) {
 }
 
 /**
- * Generate a short-lived signed URL for a raw Cloudinary asset.
- * This is the correct way to serve private raw files — the browser
- * loads the signed URL directly without needing credentials.
+ * Extract the Cloudinary public_id from a secure_url.
+ * Example:
+ *   https://res.cloudinary.com/demo/raw/upload/v123/folder/file.pdf
+ *   → folder/file.pdf
+ */
+export function extractPublicIdFromCloudinaryUrl(cloudinaryUrl) {
+  const marker = "/upload/";
+  const uploadIndex = cloudinaryUrl.indexOf(marker);
+  if (uploadIndex === -1) {
+    throw new Error("Document storage URL is not a valid Cloudinary URL.");
+  }
+
+  let publicId = cloudinaryUrl.slice(uploadIndex + marker.length);
+  publicId = publicId.replace(/^v\d+\//, "");
+  return publicId.split("?")[0];
+}
+
+/**
+ * Build candidate public_ids for assets uploaded at different times.
+ * Older uploads may include ".pdf" in the public_id; newer ones do not.
+ */
+export function getCloudinaryPublicIdCandidates(publicId) {
+  const candidates = [publicId];
+  if (!/\.pdf$/i.test(publicId)) {
+    candidates.push(`${publicId}.pdf`);
+  } else {
+    candidates.push(publicId.replace(/\.pdf$/i, ""));
+  }
+  return [...new Set(candidates)];
+}
+
+/**
+ * Download a raw PDF from Cloudinary using the Admin API (authenticated).
  *
- * @param {string} publicId  - Cloudinary public_id (no extension)
- * @param {number} [ttlSecs] - How long the URL is valid (default 1 hour)
- * @returns {string} Signed HTTPS URL
+ * Why not fetch(secure_url)?
+ * Cloudinary may restrict anonymous PDF delivery (401 ACL failure) even when
+ * the asset exists. The Admin download endpoint always works server-side
+ * because it is signed with api_key + api_secret.
+ */
+export async function downloadCloudinaryRawPdf(storagePath) {
+  ensureCloudinaryConfigured();
+
+  const extractedPublicId = extractPublicIdFromCloudinaryUrl(storagePath);
+  const candidates = getCloudinaryPublicIdCandidates(extractedPublicId);
+  let lastAttempt = null;
+
+  for (const publicId of candidates) {
+    const downloadUrl = cloudinary.utils.private_download_url(publicId, null, {
+      resource_type: "raw",
+      type: "upload",
+    });
+
+    const response = await fetch(downloadUrl);
+    lastAttempt = {
+      publicId,
+      status: response.status,
+      statusText: response.statusText,
+    };
+
+    if (response.ok) {
+      const buffer = Buffer.from(await response.arrayBuffer());
+      return { buffer, publicId, bytes: buffer.length };
+    }
+  }
+
+  throw new Error(
+    `Cloudinary download failed for all public_id candidates: ${JSON.stringify(lastAttempt)}`,
+  );
+}
+
+/**
+ * Generate a short-lived signed delivery URL (browser use only).
+ * Not used for backend proxying — prefer downloadCloudinaryRawPdf().
  */
 export function getSignedCloudinaryUrl(publicId, ttlSecs = 3600) {
   ensureCloudinaryConfigured();
