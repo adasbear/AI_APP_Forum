@@ -9,6 +9,7 @@ export const db = mysql.createPool({
   password: process.env.DB_PASS || "",
   database: process.env.DB_NAME || "evangadi_forum",
   port: Number(process.env.DB_PORT) || 3306,
+  ssl: process.env.DB_SSL === "true" ? {} : undefined,
 });
 
 const ensureParams = (params) => {
